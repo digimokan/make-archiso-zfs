@@ -8,16 +8,16 @@
 # global vars:
 build_dir=''                            # temp build dir for creating archiso
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
-default_kernel_pkg='archzfs-linux-lts'  # default zfs kernel to use in archiso
 use_git_kernel_version='false'          # use the '-git' version of zfs kernel
 kernel_pkg=''                           # user-selected kernel to use in archiso
 extra_packages=''                       # extra packages to install to archiso
 
 print_usage() {
   echo 'USAGE:'
-  echo "  sudo  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  [-L|-S|-H|-Z|-D]  [-g]  [-p <pkg1,pkg2,...>]"
-  echo '                             [-f <pkgs_file>]  [-d <device>]'
+  echo "  $(basename "${0}")  -h"
+  echo "  sudo  $(basename "${0}")  [  [-L|-S|-H|-Z|-D]  [-g]  ]"
+  echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
+  echo '                             [-d <device>]'
   echo 'OPTIONS:'
   echo '  -h, --help'
   echo '      print this help message'
@@ -199,12 +199,6 @@ check_archiso_installed() {
   fi
 }
 
-select_kernel_pkg() {
-  if [ "${kernel_pkg}" = '' ]; then
-    kernel_pkg="${default_kernel_pkg}"
-  fi
-}
-
 make_archiso_build_dir() {
   build_dir="$(mktemp -d ./archiso_build_XXXXXX)"
   exit_code="${?}"
@@ -265,9 +259,10 @@ main() {
   get_cmd_opts_and_args "$@"
   check_running_as_root "$@"
   check_archiso_installed "$@"
-  select_kernel_pkg "$@"
-  make_archiso_build_dir "$@"
-  build_archiso "$@"
+  if [ "${kernel_pkg}" != '' ]; then
+    make_archiso_build_dir "$@"
+    build_archiso "$@"
+  fi
   write_iso_to_device "$@"
   clean_archiso_build_dir "$@"
   exit 0
