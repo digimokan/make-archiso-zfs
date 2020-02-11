@@ -266,20 +266,18 @@ build_archiso() {
 }
 
 write_iso_to_device() {
-  if [ "${archiso_dev}" != '' ]; then
-    dd bs=4M if="${build_dir}/out/archlinux-*" of="${archiso_dev}" status=progress oflag=sync
-    exit_code="${?}"
-    if [ "${exit_code}" != 0 ]; then
-      err_msg="writing iso to ${archiso_dev} failure"
-      print_error_msg "${err_msg}" 10
-    fi
+  dd bs=4M if="${build_dir}/out/archlinux-*" of="${archiso_dev}" status=progress oflag=sync
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    err_msg="writing iso to ${archiso_dev} failure"
+    print_error_msg "${err_msg}" 10
   fi
 }
 
 main() {
   get_cmd_opts_and_args "$@"
   check_running_as_root "$@"
-  if [ "${clean_dir}" != 'true' ]; then
+  if [ "${clean_dir}" = 'true' ]; then
     clean_archiso_build_dir "$@"
   fi
   if [ "${kernel_pkg}" != '' ]; then
@@ -287,7 +285,9 @@ main() {
     make_archiso_build_dir "$@"
     build_archiso "$@"
   fi
-  write_iso_to_device "$@"
+  if [ "${archiso_dev}" != '' ]; then
+    write_iso_to_device "$@"
+  fi
   exit 0
 }
 
