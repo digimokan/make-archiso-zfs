@@ -9,6 +9,7 @@
 build_dir=''                            # temp build dir for creating archiso
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 default_kernel_pkg='archzfs-linux-lts'  # default zfs kernel to use in archiso
+use_git_kernel_version='false'          # use the '-git' version of zfs kernel
 kernel_pkg=''                           # user-selected kernel to use in archiso
 extra_packages=''                       # extra packages to install to archiso
 
@@ -38,6 +39,8 @@ print_usage() {
   echo '      extra packages to install to iso (from file, one pkg per line)'
   echo '  -d <device>, --write-iso-to-device=<device>'
   echo '      write built iso to device (e.g. device /dev/sdb)'
+  echo '  -c --clean-build-dir'
+  echo '      clean archiso build dir and built iso when done'
   echo 'EXIT CODES:'
   echo '    0  ok'
   echo '    1  usage, arguments, or options error'
@@ -74,8 +77,8 @@ get_cmd_opts_and_args() {
             zfs-kernel-zen=*)             handle_illegal_option_arg "${OPTARG}" ;;
             zfs-kernel-dkms)              handle_zfs_kernel_dkms ;;
             zfs-kernel-dkms=*)            handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-use_git_version)   handle_zfs_kernel_use_git_version ;;
-            zfs-kernel-use_git_version=*) handle_illegal_option_arg "${OPTARG}" ;;
+            zfs-kernel-use-git-version)   handle_zfs_kernel_use_git_version ;;
+            zfs-kernel-use-git-version=*) handle_illegal_option_arg "${OPTARG}" ;;
             extra-packages-from-file=?*)  handle_extra_packages_from_file "${LONG_OPTARG}" ;;
             extra-packages-from-file*)    handle_missing_option_arg "${OPTARG}" ;;
             extra-packages=?*)            handle_extra_packages "${LONG_OPTARG}" ;;
@@ -135,8 +138,7 @@ handle_zfs_kernel_dkms() {
 }
 
 handle_zfs_kernel_use_git_version() {
-  kernel_pkg="${kernel_pkg}-git"
-  echo "${kernel_pkg}"
+  use_git_kernel_version='true'
 }
 
 handle_extra_packages() {
@@ -223,6 +225,9 @@ add_packages_to_archiso() {
   for pkg in $(echo "${extra_packages}" | tr "," " "); do
     printf "%s\\n" "${pkg}" >> "${build_dir}/releng/packages.x86_64"
   done
+  if [ "${use_git_kernel_version}" = 'true' ]; then
+    kernel_pkg="${kernel_pkg}-git"
+  fi
   printf "%s" "${kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
 }
 
