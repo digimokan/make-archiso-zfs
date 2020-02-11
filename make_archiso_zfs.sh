@@ -6,7 +6,7 @@
 ################################################################################
 
 # global vars:
-build_dir=''                            # temp build dir for creating archiso
+build_dir='archiso_build'               # build dir for creating archiso
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 use_git_kernel_version='false'          # use the '-git' version of zfs kernel
 kernel_pkg=''                           # user-selected kernel to use in archiso
@@ -15,7 +15,7 @@ extra_packages=''                       # extra packages to install to archiso
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  [  [-L|-S|-H|-Z|-D]  [-g]  ]"
+  echo "  sudo  $(basename "${0}")  [  [-L|-S|-H|-Z|-D]  [-g]  ]  [-b <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
   echo '                             [-d <device>]'
   echo 'OPTIONS:'
@@ -33,6 +33,8 @@ print_usage() {
   echo '      use archzfs-linux-dkms kernel package'
   echo '  -g, --zfs-kernel-use-git-version'
   echo '      use git version of selected kernel (e.g. archzfs-linux-git)'
+  echo '  -b <build_dir>, --set-build-dir=<build_dir>'
+  echo '      set archiso build dir (default is '\''archiso_build'\'')'
   echo '  -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>'
   echo '      extra packages to install to iso'
   echo '  -f <pkgs_file>, --extra-packages-file=<pkgs_file>'
@@ -51,7 +53,7 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hLSHZDgf:p:d:-:' option; do
+  while getopts ':hLSHZDgb:f:p:d:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       L)  handle_zfs_kernel_lts ;;
@@ -60,6 +62,7 @@ get_cmd_opts_and_args() {
       Z)  handle_zfs_kernel_zen ;;
       D)  handle_zfs_kernel_dkms ;;
       g)  handle_zfs_kernel_use_git_version ;;
+      b)  handle_set_build_dir "${OPTARG}" ;;
       f)  handle_extra_packages_from_file "${OPTARG}" ;;
       p)  handle_extra_packages "${OPTARG}" ;;
       d)  handle_write_iso_to_device "${OPTARG}" ;;
@@ -79,6 +82,8 @@ get_cmd_opts_and_args() {
             zfs-kernel-dkms=*)            handle_illegal_option_arg "${OPTARG}" ;;
             zfs-kernel-use-git-version)   handle_zfs_kernel_use_git_version ;;
             zfs-kernel-use-git-version=*) handle_illegal_option_arg "${OPTARG}" ;;
+            handle-set-build-dir=?*)      handle_set_build_dir "${LONG_OPTARG}" ;;
+            handle-set-build-dir*)        handle_missing_option_arg "${OPTARG}" ;;
             extra-packages-from-file=?*)  handle_extra_packages_from_file "${LONG_OPTARG}" ;;
             extra-packages-from-file*)    handle_missing_option_arg "${OPTARG}" ;;
             extra-packages=?*)            handle_extra_packages "${LONG_OPTARG}" ;;
@@ -139,6 +144,15 @@ handle_zfs_kernel_dkms() {
 
 handle_zfs_kernel_use_git_version() {
   use_git_kernel_version='true'
+}
+
+handle_set_build_dir() {
+  if [ ! -d "${1}" ]; then
+    err_msg="specified build dir ${1} not exist"
+    print_error_msg "${err_msg}" 1
+  else
+    build_dir="${1}"
+  fi
 }
 
 handle_extra_packages() {
