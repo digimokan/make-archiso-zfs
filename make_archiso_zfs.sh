@@ -7,6 +7,7 @@
 
 # global vars:
 build_dir='archiso_build'               # build dir for creating archiso
+clean_dir='false'                       # clean build dir before any ops
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 use_git_kernel_version='false'          # use the '-git' version of zfs kernel
 kernel_pkg=''                           # user-selected kernel to use in archiso
@@ -21,6 +22,8 @@ print_usage() {
   echo 'OPTIONS:'
   echo '  -h, --help'
   echo '      print this help message'
+  echo '  -c --clean-build-dir'
+  echo '      remove archiso build dir before performing any operations'
   echo '  -L, --zfs-kernel-lts'
   echo '      use archzfs-linux-lts kernel package (default option)'
   echo '  -S, --zfs-kernel-stable'
@@ -41,8 +44,6 @@ print_usage() {
   echo '      extra packages to install to iso (from file, one pkg per line)'
   echo '  -d <device>, --write-iso-to-device=<device>'
   echo '      write built iso to device (e.g. device /dev/sdb)'
-  echo '  -c --clean-build-dir'
-  echo '      clean archiso build dir and built iso when done'
   echo 'EXIT CODES:'
   echo '    0  ok'
   echo '    1  usage, arguments, or options error'
@@ -53,9 +54,10 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hLSHZDgb:f:p:d:-:' option; do
+  while getopts ':hcLSHZDgb:f:p:d:-:' option; do
     case "${option}" in
       h)  handle_help ;;
+      c)  handle_clean_build_dir ;;
       L)  handle_zfs_kernel_lts ;;
       S)  handle_zfs_kernel_stable ;;
       H)  handle_zfs_kernel_hardened ;;
@@ -70,6 +72,8 @@ get_cmd_opts_and_args() {
           case ${OPTARG} in
             help)                         handle_help ;;
             help=*)                       handle_illegal_option_arg "${OPTARG}" ;;
+            clean-build-dir)              handle_clean_build_dir ;;
+            clean-build-dir=*)            handle_illegal_option_arg "${OPTARG}" ;;
             zfs-kernel-lts)               handle_zfs_kernel_lts ;;
             zfs-kernel-lts=*)             handle_illegal_option_arg "${OPTARG}" ;;
             zfs-kernel-stable)            handle_zfs_kernel_stable ;;
@@ -100,6 +104,10 @@ get_cmd_opts_and_args() {
 
 handle_help() {
   print_usage 0
+}
+
+handle_clean_build_dir() {
+  clean_dir='true'
 }
 
 handle_zfs_kernel_lts() {
@@ -194,7 +202,6 @@ handle_missing_option_arg() {
 }
 
 print_error_msg() {
-  clean_archiso_build_dir "$@"
   echo 'ERROR:'
   printf "$(basename "${0}"): %s\\n\\n" "${1}"
   print_usage "${2}"
@@ -203,6 +210,12 @@ print_error_msg() {
 check_running_as_root() {
   if [ "$(id -u)" != "0" ]; then
     print_error_msg "must run this script as root" 1
+  fi
+}
+
+clean_archiso_build_dir() {
+  if [ -d "${build_dir}" ]; then
+    rm -r "${build_dir}"
   fi
 }
 
@@ -263,22 +276,18 @@ write_iso_to_device() {
   fi
 }
 
-clean_archiso_build_dir() {
-  if [ -d "${build_dir}" ]; then
-    rm -r "${build_dir}"
-  fi
-}
-
 main() {
   get_cmd_opts_and_args "$@"
   check_running_as_root "$@"
-  check_archiso_installed "$@"
+  if [ "${clean_dir}" != 'true' ]; then
+    clean_archiso_build_dir "$@"
+  fi
   if [ "${kernel_pkg}" != '' ]; then
+    check_archiso_installed "$@"
     make_archiso_build_dir "$@"
     build_archiso "$@"
   fi
   write_iso_to_device "$@"
-  clean_archiso_build_dir "$@"
   exit 0
 }
 
