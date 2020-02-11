@@ -172,7 +172,6 @@ handle_extra_packages_from_file() {
 }
 
 handle_write_iso_to_device() {
-  echo "the device ${1}"
   if [ ! -b "${1}" ]; then
     print_error_msg "${1} not exist or not block device" 1
   fi
@@ -214,10 +213,11 @@ check_archiso_installed() {
 }
 
 make_archiso_build_dir() {
-  build_dir="$(mktemp -d ./archiso_build_XXXXXX)"
+  mkdir -p "${build_dir}"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
-    print_error_msg "unable to create archiso build dir" 5
+    err_msg="unable to create archiso build dir '${build_dir}'"
+    print_error_msg "${err_msg}" 5
   fi
 }
 
