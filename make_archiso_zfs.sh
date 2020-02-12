@@ -122,7 +122,7 @@ handle_zfs_kernel_stable() {
   if [ "${kernel_pkg}" != '' ]; then
     print_error_msg "multiple zfs kernel packages selected" 1
   else
-    kernel_pkg='archzfs-linux-stable'
+    kernel_pkg='archzfs-linux'
   fi
 }
 
