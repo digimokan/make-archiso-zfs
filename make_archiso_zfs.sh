@@ -146,7 +146,7 @@ handle_zfs_kernel_dkms() {
   if [ "${kernel_pkg}" != '' ]; then
     print_error_msg "multiple zfs kernel packages selected" 1
   else
-    kernel_pkg='archzfs-linux-dkms'
+    kernel_pkg='archzfs-dkms'
   fi
 }
 
