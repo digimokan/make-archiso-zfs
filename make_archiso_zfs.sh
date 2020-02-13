@@ -155,12 +155,7 @@ handle_zfs_kernel_use_git_version() {
 }
 
 handle_set_build_dir() {
-  if [ ! -d "${1}" ]; then
-    err_msg="specified build dir ${1} not exist"
-    print_error_msg "${err_msg}" 1
-  else
-    build_dir="${1}"
-  fi
+  build_dir="${1}"
 }
 
 handle_extra_packages() {
