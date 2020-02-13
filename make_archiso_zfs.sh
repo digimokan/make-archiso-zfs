@@ -112,7 +112,7 @@ handle_clean_build_dir() {
 
 handle_zfs_kernel_lts() {
   if [ "${kernel_pkg}" != '' ]; then
-    print_error_msg "multiple zfs kernel packages selected" 1
+    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
   else
     kernel_pkg='archzfs-linux-lts'
   fi
@@ -120,7 +120,7 @@ handle_zfs_kernel_lts() {
 
 handle_zfs_kernel_stable() {
   if [ "${kernel_pkg}" != '' ]; then
-    print_error_msg "multiple zfs kernel packages selected" 1
+    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
   else
     kernel_pkg='archzfs-linux'
   fi
@@ -128,7 +128,7 @@ handle_zfs_kernel_stable() {
 
 handle_zfs_kernel_hardened() {
   if [ "${kernel_pkg}" != '' ]; then
-    print_error_msg "multiple zfs kernel packages selected" 1
+    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
   else
     kernel_pkg='archzfs-linux-hardened'
   fi
@@ -136,7 +136,7 @@ handle_zfs_kernel_hardened() {
 
 handle_zfs_kernel_zen() {
   if [ "${kernel_pkg}" != '' ]; then
-    print_error_msg "multiple zfs kernel packages selected" 1
+    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
   else
     kernel_pkg='archzfs-linux-zen'
   fi
@@ -144,7 +144,7 @@ handle_zfs_kernel_zen() {
 
 handle_zfs_kernel_dkms() {
   if [ "${kernel_pkg}" != '' ]; then
-    print_error_msg "multiple zfs kernel packages selected" 1
+    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
   else
     kernel_pkg='archzfs-dkms'
   fi
@@ -176,35 +176,44 @@ handle_extra_packages_from_file() {
 
 handle_write_iso_to_device() {
   if [ ! -b "${1}" ]; then
-    print_error_msg "${1} not exist or not block device" 1
+    quit_err_msg_with_help "${1} not exist or not block device" 1
   fi
   archiso_dev="${1}"
 }
 
 handle_unknown_option() {
   err_msg="unknown option \"${1}\""
-  print_error_msg "${err_msg}" 1
+  quit_err_msg_with_help "${err_msg}" 1
 }
 
 handle_illegal_option_arg() {
   err_msg="illegal argument in \"${1}\""
-  print_error_msg "${err_msg}" 1
+  quit_err_msg_with_help "${err_msg}" 1
 }
 
 handle_missing_option_arg() {
   err_msg="missing argument for option \"${1}\""
-  print_error_msg "${err_msg}" 1
+  quit_err_msg_with_help "${err_msg}" 1
 }
 
-print_error_msg() {
+print_err_msg() {
   echo 'ERROR:'
   printf "$(basename "${0}"): %s\\n\\n" "${1}"
+}
+
+quit_err_msg() {
+  print_err_msg "${1}"
+  exit "${2}"
+}
+
+quit_err_msg_with_help() {
+  print_err_msg "${1}"
   print_usage "${2}"
 }
 
 check_running_as_root() {
   if [ "$(id -u)" != "0" ]; then
-    print_error_msg "must run this script as root" 1
+    quit_err_msg_with_help "must run this script as root" 1
   fi
 }
 
@@ -216,7 +225,7 @@ clean_archiso_build_dir() {
 
 check_archiso_installed() {
   if [ ! -d '/usr/share/archiso' ]; then
-    print_error_msg "'/usr/share/archiso/' not exist (is archiso installed?)" 1
+    quit_err_msg_with_help "'/usr/share/archiso/' not exist (is archiso installed?)" 1
   fi
 }
 
@@ -225,7 +234,7 @@ make_archiso_build_dir() {
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
     err_msg="unable to create archiso build dir '${build_dir}'"
-    print_error_msg "${err_msg}" 5
+    quit_err_msg "${err_msg}" 5
   fi
 }
 
@@ -254,7 +263,7 @@ build_archiso() {
   "${build_dir}/releng/build.sh" -v
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
-    print_error_msg "archiso releng/build.sh script failure" 5
+    quit_err_msg "archiso releng/build.sh script failure" 5
   fi
   mv work "${build_dir}/work"
   mv out "${build_dir}/out"
@@ -263,13 +272,13 @@ build_archiso() {
 write_iso_to_device() {
   if [ ! -d "${build_dir}" ]; then
     err_msg="writing iso from ${build_dir}, but ${build_dir} not exist"
-    print_error_msg "${err_msg}" 10
+    quit_err_msg_with_help "${err_msg}" 10
   fi
   dd bs=4M if="${build_dir}/out/archlinux-*" of="${archiso_dev}" status=progress oflag=sync
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
     err_msg="writing iso to ${archiso_dev} failure"
-    print_error_msg "${err_msg}" 10
+    quit_err_msg "${err_msg}" 10
   fi
 }
 
