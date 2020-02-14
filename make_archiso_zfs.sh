@@ -274,7 +274,8 @@ write_iso_to_device() {
     err_msg="writing iso from ${build_dir}, but ${build_dir} not exist"
     quit_err_msg_with_help "${err_msg}" 10
   fi
-  dd bs=4M if="${build_dir}/out/archlinux-*" of="${archiso_dev}" status=progress oflag=sync
+  iso_file=$(ls ./"${build_dir}"/out/archlinux-*)
+  dd bs=4M if="${iso_file}" of="${archiso_dev}" status=progress oflag=sync
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
     err_msg="writing iso to ${archiso_dev} failure"
