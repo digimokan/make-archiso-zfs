@@ -239,11 +239,17 @@ make_archiso_build_dir() {
 }
 
 add_archzfs_repo_to_archiso() {
-  cat <<- 'EOF' >> "${build_dir}/releng/pacman.conf"
-[archzfs]
-Server = http://archzfs.com/$repo/x86_64
-SigLevel = Optional TrustAll
-EOF
+  # archived 'core' repo stable/lts/etc kernel binaries:
+  #     https://end.re/2018/05/31/ebp036_archzfs-repo-for-kernels/
+  # note: archzfs kernels often depend on these archived binaries
+  # note: must be first in repo order, or 'core' kernel binaries will be used
+  # shellcheck disable=SC2016
+  sed -i '/^\[core\]$/ i\[archzfs-kernels]\nServer = http://end.re/$repo\n' "${build_dir}/releng/pacman.conf"
+  # archzfs stable/lts/etc zfs kernel binaries:
+  #     https://github.com/archzfs/archzfs/wiki
+  # note: archzfs kernels not in other repos, so safe to append to repo order
+  # shellcheck disable=SC2016
+  sed -i '$ a\\n[archzfs]\nServer = http://archzfs.com/$repo/x86_64\nSigLevel = Optional TrustAll\n' "${build_dir}/releng/pacman.conf"
 }
 
 add_packages_to_archiso() {
