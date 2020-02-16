@@ -255,7 +255,15 @@ add_archzfs_repo_to_archiso() {
   sed -i '$ a\\n[archzfs]\nServer = http://archzfs.com/$repo/x86_64\nSigLevel = Optional TrustAll\n' "${build_dir}/releng/pacman.conf"
 }
 
-add_packages_to_archiso() {
+add_linux_header_packages_to_archiso() {
+  # recommendation: https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso
+  printf "linux-headers\\n" >> "${build_dir}/releng/packages.x86_64"
+  if [ "${kernel_pkg}" = 'archzfs-linux-lts' ]; then
+    printf "linux-lts-headers\\n" >> "${build_dir}/releng/packages.x86_64"
+  fi
+}
+
+add_user_packages_to_archiso() {
   for pkg in $(echo "${extra_packages}" | tr "," " "); do
     printf "%s\\n" "${pkg}" >> "${build_dir}/releng/packages.x86_64"
   done
@@ -292,7 +300,8 @@ clean_working_build_dirs() {
 build_archiso() {
   make_archiso_build_dir "$@"
   add_archzfs_repo_to_archiso "$@"
-  add_packages_to_archiso "$@"
+  add_linux_header_packages_to_archiso "$@"
+  add_user_packages_to_archiso "$@"
   load_zfs_kernel_module_on_archiso_boot "$@"
   run_archiso_build_script "$@"
   clean_working_build_dirs "$@"
