@@ -203,11 +203,13 @@ print_err_msg() {
 
 quit_err_msg() {
   print_err_msg "${1}"
+  clean_working_build_dirs "$@"
   exit "${2}"
 }
 
 quit_err_msg_with_help() {
   print_err_msg "${1}"
+  clean_working_build_dirs "$@"
   print_usage "${2}"
 }
 
@@ -236,6 +238,7 @@ make_archiso_build_dir() {
     err_msg="unable to create archiso build dir '${build_dir}'"
     quit_err_msg "${err_msg}" 5
   fi
+  cp -r /usr/share/archiso/configs/releng/ "${build_dir}"
 }
 
 add_archzfs_repo_to_archiso() {
@@ -262,17 +265,36 @@ add_packages_to_archiso() {
   printf "%s" "${kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
 }
 
-build_archiso() {
-  cp -r /usr/share/archiso/configs/releng/ "${build_dir}"
-  add_archzfs_repo_to_archiso "$@"
-  add_packages_to_archiso "$@"
+load_zfs_kernel_module_on_archiso_boot() {
+  mkdir -p "${build_dir}/releng/airootfs/etc/modules-load.d"
+  printf "zfs\\n" > "${build_dir}/releng/airootfs/etc/modules-load.d/zfs.conf"
+}
+
+run_archiso_build_script() {
   "${build_dir}/releng/build.sh" -v
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
     quit_err_msg "archiso releng/build.sh script failure" 5
   fi
-  mv work "${build_dir}/work"
-  mv out "${build_dir}/out"
+}
+
+clean_working_build_dirs() {
+  if [ -d "${build_dir}" ]; then
+    [ -d work ] && mv work "${build_dir}/work"
+    [ -d out ] && mv out "${build_dir}/out"
+  else
+    [ -d work ] && rm -r work
+    [ -d out ] && rm -r out
+  fi
+}
+
+build_archiso() {
+  make_archiso_build_dir "$@"
+  add_archzfs_repo_to_archiso "$@"
+  add_packages_to_archiso "$@"
+  load_zfs_kernel_module_on_archiso_boot "$@"
+  run_archiso_build_script "$@"
+  clean_working_build_dirs "$@"
 }
 
 write_iso_to_device() {
@@ -297,7 +319,6 @@ main() {
   fi
   if [ "${kernel_pkg}" != '' ]; then
     check_archiso_installed "$@"
-    make_archiso_build_dir "$@"
     build_archiso "$@"
   fi
   if [ "${archiso_dev}" != '' ]; then
