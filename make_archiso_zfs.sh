@@ -266,6 +266,7 @@ add_packages_to_archiso() {
 }
 
 load_zfs_kernel_module_on_archiso_boot() {
+  # recommended method: https://wiki.archlinux.org/index.php/ZFS#Automatic_Start
   mkdir -p "${build_dir}/releng/airootfs/etc/modules-load.d"
   printf "zfs\\n" > "${build_dir}/releng/airootfs/etc/modules-load.d/zfs.conf"
 }
@@ -303,6 +304,7 @@ write_iso_to_device() {
     quit_err_msg_with_help "${err_msg}" 10
   fi
   iso_file=$(ls ./"${build_dir}"/out/archlinux-*)
+  # recommended method: https://wiki.archlinux.org/index.php/USB_flash_installation_media#Using_dd
   dd bs=4M if="${iso_file}" of="${archiso_dev}" status=progress oflag=sync
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
