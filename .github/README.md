@@ -17,8 +17,7 @@ Shell script to build Arch Linux iso that runs zfs kernel.
 
 ## Motivation
 
-Automate the steps in [Archwiki: ZFS]
-(https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso)
+Automate the steps in [Archwiki: ZFS](https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso)
 required to build an Arch Linux iso.
 
 ## Features
@@ -27,7 +26,7 @@ required to build an Arch Linux iso.
 * Option to install unloaded lts zfs kernel (`archzfs-linux-lts`).
 * Option to install extra user-specified packages, from cmd line or input file.
 * Option to write the built iso to device (i.e. /dev/sdx USB drive).
-* Simple shell-agnostic script, [`shellcheck`](https://github.com/koalaman/shellcheck)
+* Simple shell-agnostic script, [shellcheck](https://github.com/koalaman/shellcheck)
   error and warning free.
 * Script help menu and clear examples.
 
