@@ -10,30 +10,35 @@ build_dir='archiso_build'               # build dir for creating archiso
 clean_dir='false'                       # clean build dir before any ops
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 use_git_kernel_version='false'          # use the '-git' version of zfs kernel
-kernel_pkg=''                           # user-selected kernel to use in archiso
+stable_kernel_pkg=''                    # stable kernel cmd-line selection
+lts_kernel_pkg=''                       # lts kernel cmd-line selection
+hardened_kernel_pkg=''                  # hardened kernel cmd-line selection
+zen_kernel_pkg=''                       # zen kernel cmd-line selection
+dkms_kernel_pkg=''                      # dkms kernel cmd-line selection
 extra_packages=''                       # extra packages to install to archiso
 
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  [  [-L|-S|-H|-Z|-D]  [-g]  ]  [-b <build_dir>]"
+  echo "  sudo  $(basename "${0}")  -S [[-L][-H][-Z][-D]]  [-g]  [-b <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
   echo '                             [-d <device>]'
+  echo "  sudo  $(basename "${0}")  [-b <build_dir>]  -d <device>"
   echo 'OPTIONS:'
   echo '  -h, --help'
   echo '      print this help message'
   echo '  -c --clean-build-dir'
   echo '      remove archiso build dir before performing any operations'
-  echo '  -L, --zfs-kernel-lts'
-  echo '      use archzfs-linux-lts kernel package (default option)'
-  echo '  -S, --zfs-kernel-stable'
-  echo '      use archzfs-linux kernel package'
-  echo '  -H, --zfs-kernel-hardened'
-  echo '      use archzfs-linux-hardened kernel package'
-  echo '  -Z, --zfs-kernel-zen'
-  echo '      use archzfs-linux-zen kernel package'
-  echo '  -D, --zfs-kernel-dkms'
-  echo '      use archzfs-linux-dkms kernel package'
+  echo '  -S, --build-with-stable-zfs-kernel'
+  echo '      build base iso running archzfs-linux kernel package'
+  echo '  -L, --add-lts-zfs-kernel'
+  echo '      add archzfs-linux-lts kernel package to iso'
+  echo '  -H, --add-hardened-zfs-kernel'
+  echo '      add archzfs-linux-hardened kernel package to iso'
+  echo '  -Z, --add-zen-zfs-kernel'
+  echo '      add archzfs-linux-zen kernel package to iso'
+  echo '  -D, --add-dkms-zfs-kernel'
+  echo '      add archzfs-linux-dkms kernel package to iso'
   echo '  -g, --zfs-kernel-use-git-version'
   echo '      use git version of selected kernel (e.g. archzfs-linux-git)'
   echo '  -b <build_dir>, --set-build-dir=<build_dir>'
@@ -70,32 +75,32 @@ get_cmd_opts_and_args() {
       d)  handle_write_iso_to_device "${OPTARG}" ;;
       -)  LONG_OPTARG="${OPTARG#*=}"
           case ${OPTARG} in
-            help)                         handle_help ;;
-            help=*)                       handle_illegal_option_arg "${OPTARG}" ;;
-            clean-build-dir)              handle_clean_build_dir ;;
-            clean-build-dir=*)            handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-lts)               handle_zfs_kernel_lts ;;
-            zfs-kernel-lts=*)             handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-stable)            handle_zfs_kernel_stable ;;
-            zfs-kernel-stable=*)          handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-hardened)          handle_zfs_kernel_hardened ;;
-            zfs-kernel-hardened=*)        handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-zen)               handle_zfs_kernel_zen ;;
-            zfs-kernel-zen=*)             handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-dkms)              handle_zfs_kernel_dkms ;;
-            zfs-kernel-dkms=*)            handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-use-git-version)   handle_zfs_kernel_use_git_version ;;
-            zfs-kernel-use-git-version=*) handle_illegal_option_arg "${OPTARG}" ;;
-            handle-set-build-dir=?*)      handle_set_build_dir "${LONG_OPTARG}" ;;
-            handle-set-build-dir*)        handle_missing_option_arg "${OPTARG}" ;;
-            extra-packages-from-file=?*)  handle_extra_packages_from_file "${LONG_OPTARG}" ;;
-            extra-packages-from-file*)    handle_missing_option_arg "${OPTARG}" ;;
-            extra-packages=?*)            handle_extra_packages "${LONG_OPTARG}" ;;
-            extra-packages*)              handle_missing_option_arg "${OPTARG}" ;;
-            write-iso-to-device=?*)       handle_write_iso_to_device "${LONG_OPTARG}" ;;
-            write-iso-to-device*)         handle_missing_option_arg "${OPTARG}" ;;
-            '')                           break ;; # non-option arg starting with '-'
-            *)                            handle_unknown_option "${OPTARG}" ;;
+            help)                           handle_help ;;
+            help=*)                         handle_illegal_option_arg "${OPTARG}" ;;
+            clean-build-dir)                handle_clean_build_dir ;;
+            clean-build-dir=*)              handle_illegal_option_arg "${OPTARG}" ;;
+            build-with-stable-zfs-kernel)   handle_zfs_kernel_stable ;;
+            build-with-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
+            add-lts-zfs-kernel)             handle_zfs_kernel_lts ;;
+            add-lts-zfs-kernel=*)           handle_illegal_option_arg "${OPTARG}" ;;
+            add-hardened-zfs-kernel)        handle_zfs_kernel_hardened ;;
+            add-hardened-zfs-kernel=*)      handle_illegal_option_arg "${OPTARG}" ;;
+            add-zen-zfs-kernel)             handle_zfs_kernel_zen ;;
+            add-zen-zfs-kernel=*)           handle_illegal_option_arg "${OPTARG}" ;;
+            add-dkms-zfs-kernel)            handle_zfs_kernel_dkms ;;
+            add-dkms-zfs-kernel=*)          handle_illegal_option_arg "${OPTARG}" ;;
+            zfs-kernel-use-git-version)     handle_zfs_kernel_use_git_version ;;
+            zfs-kernel-use-git-version=*)   handle_illegal_option_arg "${OPTARG}" ;;
+            handle-set-build-dir=?*)        handle_set_build_dir "${LONG_OPTARG}" ;;
+            handle-set-build-dir*)          handle_missing_option_arg "${OPTARG}" ;;
+            extra-packages-from-file=?*)    handle_extra_packages_from_file "${LONG_OPTARG}" ;;
+            extra-packages-from-file*)      handle_missing_option_arg "${OPTARG}" ;;
+            extra-packages=?*)              handle_extra_packages "${LONG_OPTARG}" ;;
+            extra-packages*)                handle_missing_option_arg "${OPTARG}" ;;
+            write-iso-to-device=?*)         handle_write_iso_to_device "${LONG_OPTARG}" ;;
+            write-iso-to-device*)           handle_missing_option_arg "${OPTARG}" ;;
+            '')                             break ;; # non-option arg starting with '-'
+            *)                              handle_unknown_option "${OPTARG}" ;;
           esac ;;
       \?) handle_unknown_option "${OPTARG}" ;;
     esac
@@ -110,44 +115,24 @@ handle_clean_build_dir() {
   clean_dir='true'
 }
 
-handle_zfs_kernel_lts() {
-  if [ "${kernel_pkg}" != '' ]; then
-    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
-  else
-    kernel_pkg='archzfs-linux-lts'
-  fi
+handle_zfs_kernel_stable() {
+  stable_kernel_pkg='archzfs-linux'
 }
 
-handle_zfs_kernel_stable() {
-  if [ "${kernel_pkg}" != '' ]; then
-    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
-  else
-    kernel_pkg='archzfs-linux'
-  fi
+handle_zfs_kernel_lts() {
+  lts_kernel_pkg='archzfs-linux-lts'
 }
 
 handle_zfs_kernel_hardened() {
-  if [ "${kernel_pkg}" != '' ]; then
-    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
-  else
-    kernel_pkg='archzfs-linux-hardened'
-  fi
+  hardened_kernel_pkg='archzfs-linux-hardened'
 }
 
 handle_zfs_kernel_zen() {
-  if [ "${kernel_pkg}" != '' ]; then
-    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
-  else
-    kernel_pkg='archzfs-linux-zen'
-  fi
+  zen_kernel_pkg='archzfs-linux-zen'
 }
 
 handle_zfs_kernel_dkms() {
-  if [ "${kernel_pkg}" != '' ]; then
-    quit_err_msg_with_help "multiple zfs kernel packages selected" 1
-  else
-    kernel_pkg='archzfs-dkms'
-  fi
+  dkms_kernel_pkg='archzfs-dkms'
 }
 
 handle_zfs_kernel_use_git_version() {
@@ -258,8 +243,14 @@ add_archzfs_repo_to_archiso() {
 add_linux_header_packages_to_archiso() {
   # recommendation: https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso
   printf "linux-headers\\n" >> "${build_dir}/releng/packages.x86_64"
-  if [ "${kernel_pkg}" = 'archzfs-linux-lts' ]; then
+  if [ "${lts_kernel_pkg}" = 'archzfs-linux-lts' ]; then
     printf "linux-lts-headers\\n" >> "${build_dir}/releng/packages.x86_64"
+  fi
+  if [ "${hardened_kernel_pkg}" = 'archzfs-linux-hardened' ]; then
+    printf "linux-hardened-headers\\n" >> "${build_dir}/releng/packages.x86_64"
+  fi
+  if [ "${zen_kernel_pkg}" = 'archzfs-linux-zen' ]; then
+    printf "linux-zen-headers\\n" >> "${build_dir}/releng/packages.x86_64"
   fi
 }
 
@@ -268,9 +259,9 @@ add_user_packages_to_archiso() {
     printf "%s\\n" "${pkg}" >> "${build_dir}/releng/packages.x86_64"
   done
   if [ "${use_git_kernel_version}" = 'true' ]; then
-    kernel_pkg="${kernel_pkg}-git"
+    stable_kernel_pkg="${stable_kernel_pkg}-git"
   fi
-  printf "%s" "${kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
+  printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
 }
 
 load_zfs_kernel_module_on_archiso_boot() {
@@ -328,7 +319,7 @@ main() {
   if [ "${clean_dir}" = 'true' ]; then
     clean_archiso_build_dir "$@"
   fi
-  if [ "${kernel_pkg}" != '' ]; then
+  if [ "${stable_kernel_pkg}" != '' ]; then
     check_archiso_installed "$@"
     build_archiso "$@"
   fi
