@@ -16,7 +16,7 @@ extra_packages=''                       # extra packages to install to archiso
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  -b  [-L]  [-d <build_dir>]"
+  echo "  sudo  $(basename "${0}")  -b  [-l]  [-d <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
   echo '                             [-w <device>]'
   echo "  sudo  $(basename "${0}")  [-d <build_dir>]  -w <device>"
@@ -27,7 +27,7 @@ print_usage() {
   echo '      remove archiso build dir before performing any operations'
   echo '  -b, --build-with-stable-zfs-kernel'
   echo '      build base iso running archzfs-linux kernel package'
-  echo '  -L, --add-lts-zfs-kernel'
+  echo '  -l, --add-lts-zfs-kernel'
   echo '      add archzfs-linux-lts kernel package to iso'
   echo '  -d <build_dir>, --set-build-dir=<build_dir>'
   echo '      set archiso build dir (default is '\''archiso_build'\'')'
@@ -47,12 +47,12 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hcbLd:f:p:w:-:' option; do
+  while getopts ':hcbld:f:p:w:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       c)  handle_clean_build_dir ;;
       b)  handle_zfs_kernel_stable ;;
-      L)  handle_zfs_kernel_lts ;;
+      l)  handle_zfs_kernel_lts ;;
       d)  handle_set_build_dir "${OPTARG}" ;;
       f)  handle_extra_packages_from_file "${OPTARG}" ;;
       p)  handle_extra_packages "${OPTARG}" ;;
