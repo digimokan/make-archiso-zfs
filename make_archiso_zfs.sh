@@ -9,7 +9,6 @@
 build_dir='archiso_build'               # build dir for creating archiso
 clean_dir='false'                       # clean build dir before any ops
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
-use_git_kernel_version='false'          # use the '-git' version of zfs kernel
 stable_kernel_pkg=''                    # stable kernel cmd-line selection
 lts_kernel_pkg=''                       # lts kernel cmd-line selection
 extra_packages=''                       # extra packages to install to archiso
@@ -17,7 +16,7 @@ extra_packages=''                       # extra packages to install to archiso
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  -S  [-L]  [-g]  [-b <build_dir>]"
+  echo "  sudo  $(basename "${0}")  -S  [-L]  [-b <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
   echo '                             [-d <device>]'
   echo "  sudo  $(basename "${0}")  [-b <build_dir>]  -d <device>"
@@ -30,8 +29,6 @@ print_usage() {
   echo '      build base iso running archzfs-linux kernel package'
   echo '  -L, --add-lts-zfs-kernel'
   echo '      add archzfs-linux-lts kernel package to iso'
-  echo '  -g, --zfs-kernel-use-git-version'
-  echo '      use git version of selected kernel (e.g. archzfs-linux-git)'
   echo '  -b <build_dir>, --set-build-dir=<build_dir>'
   echo '      set archiso build dir (default is '\''archiso_build'\'')'
   echo '  -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>'
@@ -50,13 +47,12 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hcLSDgb:f:p:d:-:' option; do
+  while getopts ':hcLSb:f:p:d:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       c)  handle_clean_build_dir ;;
       L)  handle_zfs_kernel_lts ;;
       S)  handle_zfs_kernel_stable ;;
-      g)  handle_zfs_kernel_use_git_version ;;
       b)  handle_set_build_dir "${OPTARG}" ;;
       f)  handle_extra_packages_from_file "${OPTARG}" ;;
       p)  handle_extra_packages "${OPTARG}" ;;
@@ -71,8 +67,6 @@ get_cmd_opts_and_args() {
             build-with-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
             add-lts-zfs-kernel)             handle_zfs_kernel_lts ;;
             add-lts-zfs-kernel=*)           handle_illegal_option_arg "${OPTARG}" ;;
-            zfs-kernel-use-git-version)     handle_zfs_kernel_use_git_version ;;
-            zfs-kernel-use-git-version=*)   handle_illegal_option_arg "${OPTARG}" ;;
             handle-set-build-dir=?*)        handle_set_build_dir "${LONG_OPTARG}" ;;
             handle-set-build-dir*)          handle_missing_option_arg "${OPTARG}" ;;
             extra-packages-from-file=?*)    handle_extra_packages_from_file "${LONG_OPTARG}" ;;
@@ -103,10 +97,6 @@ handle_zfs_kernel_stable() {
 
 handle_zfs_kernel_lts() {
   lts_kernel_pkg='archzfs-linux-lts'
-}
-
-handle_zfs_kernel_use_git_version() {
-  use_git_kernel_version='true'
 }
 
 handle_set_build_dir() {
@@ -211,9 +201,6 @@ add_archzfs_repo_to_archiso() {
 }
 
 add_kernel_packages_to_archiso() {
-  if [ "${use_git_kernel_version}" = 'true' ]; then
-    stable_kernel_pkg="${stable_kernel_pkg}-git"
-  fi
   printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
   if [ "${lts_kernel_pkg}" = 'archzfs-linux-lts' ]; then
     printf "%s\\n" "${lts_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
