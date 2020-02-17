@@ -12,13 +12,12 @@ archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 use_git_kernel_version='false'          # use the '-git' version of zfs kernel
 stable_kernel_pkg=''                    # stable kernel cmd-line selection
 lts_kernel_pkg=''                       # lts kernel cmd-line selection
-dkms_kernel_pkg=''                      # dkms kernel cmd-line selection
 extra_packages=''                       # extra packages to install to archiso
 
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  -S  [[-L][-D]]  [-g]  [-b <build_dir>]"
+  echo "  sudo  $(basename "${0}")  -S  [-L]  [-g]  [-b <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
   echo '                             [-d <device>]'
   echo "  sudo  $(basename "${0}")  [-b <build_dir>]  -d <device>"
@@ -31,8 +30,6 @@ print_usage() {
   echo '      build base iso running archzfs-linux kernel package'
   echo '  -L, --add-lts-zfs-kernel'
   echo '      add archzfs-linux-lts kernel package to iso'
-  echo '  -D, --add-dkms-zfs-kernel'
-  echo '      add archzfs-linux-dkms kernel package to iso'
   echo '  -g, --zfs-kernel-use-git-version'
   echo '      use git version of selected kernel (e.g. archzfs-linux-git)'
   echo '  -b <build_dir>, --set-build-dir=<build_dir>'
@@ -59,7 +56,6 @@ get_cmd_opts_and_args() {
       c)  handle_clean_build_dir ;;
       L)  handle_zfs_kernel_lts ;;
       S)  handle_zfs_kernel_stable ;;
-      D)  handle_zfs_kernel_dkms ;;
       g)  handle_zfs_kernel_use_git_version ;;
       b)  handle_set_build_dir "${OPTARG}" ;;
       f)  handle_extra_packages_from_file "${OPTARG}" ;;
@@ -75,8 +71,6 @@ get_cmd_opts_and_args() {
             build-with-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
             add-lts-zfs-kernel)             handle_zfs_kernel_lts ;;
             add-lts-zfs-kernel=*)           handle_illegal_option_arg "${OPTARG}" ;;
-            add-dkms-zfs-kernel)            handle_zfs_kernel_dkms ;;
-            add-dkms-zfs-kernel=*)          handle_illegal_option_arg "${OPTARG}" ;;
             zfs-kernel-use-git-version)     handle_zfs_kernel_use_git_version ;;
             zfs-kernel-use-git-version=*)   handle_illegal_option_arg "${OPTARG}" ;;
             handle-set-build-dir=?*)        handle_set_build_dir "${LONG_OPTARG}" ;;
@@ -109,10 +103,6 @@ handle_zfs_kernel_stable() {
 
 handle_zfs_kernel_lts() {
   lts_kernel_pkg='archzfs-linux-lts'
-}
-
-handle_zfs_kernel_dkms() {
-  dkms_kernel_pkg='archzfs-dkms'
 }
 
 handle_zfs_kernel_use_git_version() {
@@ -227,9 +217,6 @@ add_kernel_packages_to_archiso() {
   printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
   if [ "${lts_kernel_pkg}" = 'archzfs-linux-lts' ]; then
     printf "%s\\n" "${lts_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
-  fi
-  if [ "${dkms_kernel_pkg}" = 'archzfs-dkms' ]; then
-    printf "%s\\n" "${dkms_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
   fi
 }
 
