@@ -12,15 +12,13 @@ archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 use_git_kernel_version='false'          # use the '-git' version of zfs kernel
 stable_kernel_pkg=''                    # stable kernel cmd-line selection
 lts_kernel_pkg=''                       # lts kernel cmd-line selection
-hardened_kernel_pkg=''                  # hardened kernel cmd-line selection
-zen_kernel_pkg=''                       # zen kernel cmd-line selection
 dkms_kernel_pkg=''                      # dkms kernel cmd-line selection
 extra_packages=''                       # extra packages to install to archiso
 
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  -S [[-L][-H][-Z][-D]]  [-g]  [-b <build_dir>]"
+  echo "  sudo  $(basename "${0}")  -S  [[-L][-D]]  [-g]  [-b <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
   echo '                             [-d <device>]'
   echo "  sudo  $(basename "${0}")  [-b <build_dir>]  -d <device>"
@@ -33,10 +31,6 @@ print_usage() {
   echo '      build base iso running archzfs-linux kernel package'
   echo '  -L, --add-lts-zfs-kernel'
   echo '      add archzfs-linux-lts kernel package to iso'
-  echo '  -H, --add-hardened-zfs-kernel'
-  echo '      add archzfs-linux-hardened kernel package to iso'
-  echo '  -Z, --add-zen-zfs-kernel'
-  echo '      add archzfs-linux-zen kernel package to iso'
   echo '  -D, --add-dkms-zfs-kernel'
   echo '      add archzfs-linux-dkms kernel package to iso'
   echo '  -g, --zfs-kernel-use-git-version'
@@ -59,14 +53,12 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hcLSHZDgb:f:p:d:-:' option; do
+  while getopts ':hcLSDgb:f:p:d:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       c)  handle_clean_build_dir ;;
       L)  handle_zfs_kernel_lts ;;
       S)  handle_zfs_kernel_stable ;;
-      H)  handle_zfs_kernel_hardened ;;
-      Z)  handle_zfs_kernel_zen ;;
       D)  handle_zfs_kernel_dkms ;;
       g)  handle_zfs_kernel_use_git_version ;;
       b)  handle_set_build_dir "${OPTARG}" ;;
@@ -83,10 +75,6 @@ get_cmd_opts_and_args() {
             build-with-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
             add-lts-zfs-kernel)             handle_zfs_kernel_lts ;;
             add-lts-zfs-kernel=*)           handle_illegal_option_arg "${OPTARG}" ;;
-            add-hardened-zfs-kernel)        handle_zfs_kernel_hardened ;;
-            add-hardened-zfs-kernel=*)      handle_illegal_option_arg "${OPTARG}" ;;
-            add-zen-zfs-kernel)             handle_zfs_kernel_zen ;;
-            add-zen-zfs-kernel=*)           handle_illegal_option_arg "${OPTARG}" ;;
             add-dkms-zfs-kernel)            handle_zfs_kernel_dkms ;;
             add-dkms-zfs-kernel=*)          handle_illegal_option_arg "${OPTARG}" ;;
             zfs-kernel-use-git-version)     handle_zfs_kernel_use_git_version ;;
@@ -121,14 +109,6 @@ handle_zfs_kernel_stable() {
 
 handle_zfs_kernel_lts() {
   lts_kernel_pkg='archzfs-linux-lts'
-}
-
-handle_zfs_kernel_hardened() {
-  hardened_kernel_pkg='archzfs-linux-hardened'
-}
-
-handle_zfs_kernel_zen() {
-  zen_kernel_pkg='archzfs-linux-zen'
 }
 
 handle_zfs_kernel_dkms() {
@@ -240,17 +220,24 @@ add_archzfs_repo_to_archiso() {
   sed -i '$ a\\n[archzfs]\nServer = http://archzfs.com/$repo/x86_64\nSigLevel = Optional TrustAll\n' "${build_dir}/releng/pacman.conf"
 }
 
-add_linux_header_packages_to_archiso() {
+add_kernel_packages_to_archiso() {
+  if [ "${use_git_kernel_version}" = 'true' ]; then
+    stable_kernel_pkg="${stable_kernel_pkg}-git"
+  fi
+  printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
+  if [ "${lts_kernel_pkg}" = 'archzfs-linux-lts' ]; then
+    printf "%s\\n" "${lts_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
+  fi
+  if [ "${dkms_kernel_pkg}" = 'archzfs-dkms' ]; then
+    printf "%s\\n" "${dkms_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
+  fi
+}
+
+add_kernel_header_packages_to_archiso() {
   # recommendation: https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso
   printf "linux-headers\\n" >> "${build_dir}/releng/packages.x86_64"
   if [ "${lts_kernel_pkg}" = 'archzfs-linux-lts' ]; then
     printf "linux-lts-headers\\n" >> "${build_dir}/releng/packages.x86_64"
-  fi
-  if [ "${hardened_kernel_pkg}" = 'archzfs-linux-hardened' ]; then
-    printf "linux-hardened-headers\\n" >> "${build_dir}/releng/packages.x86_64"
-  fi
-  if [ "${zen_kernel_pkg}" = 'archzfs-linux-zen' ]; then
-    printf "linux-zen-headers\\n" >> "${build_dir}/releng/packages.x86_64"
   fi
 }
 
@@ -258,10 +245,6 @@ add_user_packages_to_archiso() {
   for pkg in $(echo "${extra_packages}" | tr "," " "); do
     printf "%s\\n" "${pkg}" >> "${build_dir}/releng/packages.x86_64"
   done
-  if [ "${use_git_kernel_version}" = 'true' ]; then
-    stable_kernel_pkg="${stable_kernel_pkg}-git"
-  fi
-  printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
 }
 
 load_zfs_kernel_module_on_archiso_boot() {
@@ -291,7 +274,8 @@ clean_working_build_dirs() {
 build_archiso() {
   make_archiso_build_dir "$@"
   add_archzfs_repo_to_archiso "$@"
-  add_linux_header_packages_to_archiso "$@"
+  add_kernel_packages_to_archiso "$@"
+  add_kernel_header_packages_to_archiso "$@"
   add_user_packages_to_archiso "$@"
   load_zfs_kernel_module_on_archiso_boot "$@"
   run_archiso_build_script "$@"
