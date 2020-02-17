@@ -16,26 +16,26 @@ extra_packages=''                       # extra packages to install to archiso
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  -S  [-L]  [-b <build_dir>]"
+  echo "  sudo  $(basename "${0}")  -b  [-L]  [-d <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
-  echo '                             [-d <device>]'
-  echo "  sudo  $(basename "${0}")  [-b <build_dir>]  -d <device>"
+  echo '                             [-w <device>]'
+  echo "  sudo  $(basename "${0}")  [-d <build_dir>]  -w <device>"
   echo 'OPTIONS:'
   echo '  -h, --help'
   echo '      print this help message'
   echo '  -c --clean-build-dir'
   echo '      remove archiso build dir before performing any operations'
-  echo '  -S, --build-with-stable-zfs-kernel'
+  echo '  -b, --build-with-stable-zfs-kernel'
   echo '      build base iso running archzfs-linux kernel package'
   echo '  -L, --add-lts-zfs-kernel'
   echo '      add archzfs-linux-lts kernel package to iso'
-  echo '  -b <build_dir>, --set-build-dir=<build_dir>'
+  echo '  -d <build_dir>, --set-build-dir=<build_dir>'
   echo '      set archiso build dir (default is '\''archiso_build'\'')'
   echo '  -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>'
   echo '      extra packages to install to iso'
   echo '  -f <pkgs_file>, --extra-packages-file=<pkgs_file>'
   echo '      extra packages to install to iso (from file, one pkg per line)'
-  echo '  -d <device>, --write-iso-to-device=<device>'
+  echo '  -w <device>, --write-iso-to-device=<device>'
   echo '      write built iso to device (e.g. device /dev/sdb)'
   echo 'EXIT CODES:'
   echo '    0  ok'
@@ -47,16 +47,16 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hcLSb:f:p:d:-:' option; do
+  while getopts ':hcbLd:f:p:w:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       c)  handle_clean_build_dir ;;
+      b)  handle_zfs_kernel_stable ;;
       L)  handle_zfs_kernel_lts ;;
-      S)  handle_zfs_kernel_stable ;;
-      b)  handle_set_build_dir "${OPTARG}" ;;
+      d)  handle_set_build_dir "${OPTARG}" ;;
       f)  handle_extra_packages_from_file "${OPTARG}" ;;
       p)  handle_extra_packages "${OPTARG}" ;;
-      d)  handle_write_iso_to_device "${OPTARG}" ;;
+      w)  handle_write_iso_to_device "${OPTARG}" ;;
       -)  LONG_OPTARG="${OPTARG#*=}"
           case ${OPTARG} in
             help)                           handle_help ;;
