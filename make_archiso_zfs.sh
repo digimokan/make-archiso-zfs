@@ -7,16 +7,17 @@
 
 # global vars:
 build_dir='archiso_build'               # build dir for creating archiso
-clean_dir='false'                       # clean build dir before any ops
+do_clean_dir='false'                    # user-selection to clean build dir
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
+do_build_iso='false'                    # user-selection to build the iso
 stable_kernel_pkg=''                    # stable kernel cmd-line selection
 lts_kernel_pkg=''                       # lts kernel cmd-line selection
 extra_packages=''                       # extra packages to install to archiso
 
 print_usage() {
   echo 'USAGE:'
-  echo "  $(basename "${0}")  -h"
-  echo "  sudo  $(basename "${0}")  -b  [-l]  [-d <build_dir>]"
+  echo "  $(basename "${0}")        -h"
+  echo "  sudo  $(basename "${0}")  -b  [-s]  [-l]  [-d <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
   echo '                             [-w <device>]'
   echo "  sudo  $(basename "${0}")  [-d <build_dir>]  -w <device>"
@@ -25,10 +26,12 @@ print_usage() {
   echo '      print this help message'
   echo '  -c --clean-build-dir'
   echo '      remove archiso build dir before performing any operations'
-  echo '  -b, --build-with-stable-zfs-kernel'
-  echo '      build base iso running archzfs-linux kernel package'
+  echo '  -b, --build-iso'
+  echo '      build base iso running stock Arch '\''linux'\'' kernel pkg'
+  echo '  -s, --add-and-enable-stable-zfs-kernel'
+  echo '      add '\''archzfs-linux'\'' kernel pkg and enable it at boot'
   echo '  -l, --add-lts-zfs-kernel'
-  echo '      add archzfs-linux-lts kernel package to iso'
+  echo '      add '\''archzfs-linux-lts'\'' kernel pkg'
   echo '  -d <build_dir>, --set-build-dir=<build_dir>'
   echo '      set archiso build dir (default is '\''archiso_build'\'')'
   echo '  -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>'
@@ -47,11 +50,12 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hcbld:f:p:w:-:' option; do
+  while getopts ':hcbsld:f:p:w:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       c)  handle_clean_build_dir ;;
-      b)  handle_zfs_kernel_stable ;;
+      b)  handle_build_iso ;;
+      s)  handle_zfs_kernel_stable ;;
       l)  handle_zfs_kernel_lts ;;
       d)  handle_set_build_dir "${OPTARG}" ;;
       f)  handle_extra_packages_from_file "${OPTARG}" ;;
@@ -59,24 +63,26 @@ get_cmd_opts_and_args() {
       w)  handle_write_iso_to_device "${OPTARG}" ;;
       -)  LONG_OPTARG="${OPTARG#*=}"
           case ${OPTARG} in
-            help)                           handle_help ;;
-            help=*)                         handle_illegal_option_arg "${OPTARG}" ;;
-            clean-build-dir)                handle_clean_build_dir ;;
-            clean-build-dir=*)              handle_illegal_option_arg "${OPTARG}" ;;
-            build-with-stable-zfs-kernel)   handle_zfs_kernel_stable ;;
-            build-with-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
-            add-lts-zfs-kernel)             handle_zfs_kernel_lts ;;
-            add-lts-zfs-kernel=*)           handle_illegal_option_arg "${OPTARG}" ;;
-            handle-set-build-dir=?*)        handle_set_build_dir "${LONG_OPTARG}" ;;
-            handle-set-build-dir*)          handle_missing_option_arg "${OPTARG}" ;;
-            extra-packages-from-file=?*)    handle_extra_packages_from_file "${LONG_OPTARG}" ;;
-            extra-packages-from-file*)      handle_missing_option_arg "${OPTARG}" ;;
-            extra-packages=?*)              handle_extra_packages "${LONG_OPTARG}" ;;
-            extra-packages*)                handle_missing_option_arg "${OPTARG}" ;;
-            write-iso-to-device=?*)         handle_write_iso_to_device "${LONG_OPTARG}" ;;
-            write-iso-to-device*)           handle_missing_option_arg "${OPTARG}" ;;
-            '')                             break ;; # non-option arg starting with '-'
-            *)                              handle_unknown_option "${OPTARG}" ;;
+            help)                        handle_help ;;
+            help=*)                      handle_illegal_option_arg "${OPTARG}" ;;
+            clean-build-dir)             handle_clean_build_dir ;;
+            clean-build-dir=*)           handle_illegal_option_arg "${OPTARG}" ;;
+            build-iso)                   handle_build_iso ;;
+            build-iso=*)                 handle_illegal_option_arg "${OPTARG}" ;;
+            add-and-enable-stable-zfs-kernel)   handle_zfs_kernel_stable ;;
+            add-and-enable-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
+            add-lts-zfs-kernel)          handle_zfs_kernel_lts ;;
+            add-lts-zfs-kernel=*)        handle_illegal_option_arg "${OPTARG}" ;;
+            handle-set-build-dir=?*)     handle_set_build_dir "${LONG_OPTARG}" ;;
+            handle-set-build-dir*)       handle_missing_option_arg "${OPTARG}" ;;
+            extra-packages-from-file=?*) handle_extra_packages_from_file "${LONG_OPTARG}" ;;
+            extra-packages-from-file*)   handle_missing_option_arg "${OPTARG}" ;;
+            extra-packages=?*)           handle_extra_packages "${LONG_OPTARG}" ;;
+            extra-packages*)             handle_missing_option_arg "${OPTARG}" ;;
+            write-iso-to-device=?*)      handle_write_iso_to_device "${LONG_OPTARG}" ;;
+            write-iso-to-device*)        handle_missing_option_arg "${OPTARG}" ;;
+            '')                          break ;; # non-option arg starting with '-'
+            *)                           handle_unknown_option "${OPTARG}" ;;
           esac ;;
       \?) handle_unknown_option "${OPTARG}" ;;
     esac
@@ -88,7 +94,11 @@ handle_help() {
 }
 
 handle_clean_build_dir() {
-  clean_dir='true'
+  do_clean_dir='true'
+}
+
+handle_build_iso() {
+  do_build_iso='true'
 }
 
 handle_zfs_kernel_stable() {
@@ -187,6 +197,9 @@ make_archiso_build_dir() {
 }
 
 add_archzfs_repo_to_archiso() {
+  if [ "${stable_kernel_pkg}" = '' ] && [ "${lts_kernel_pkg}" = '' ]; then
+    return
+  fi
   # archived 'core' repo stable/lts/etc kernel binaries:
   #     https://end.re/2018/05/31/ebp036_archzfs-repo-for-kernels/
   # note: archzfs kernels often depend on these archived binaries
@@ -201,16 +214,20 @@ add_archzfs_repo_to_archiso() {
 }
 
 add_kernel_packages_to_archiso() {
-  printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
-  if [ "${lts_kernel_pkg}" = 'archzfs-linux-lts' ]; then
+  if [ "${stable_kernel_pkg}" != '' ]; then
+    printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
+  fi
+  if [ "${lts_kernel_pkg}" != '' ]; then
     printf "%s\\n" "${lts_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
   fi
 }
 
 add_kernel_header_packages_to_archiso() {
   # recommendation: https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso
-  printf "linux-headers\\n" >> "${build_dir}/releng/packages.x86_64"
-  if [ "${lts_kernel_pkg}" = 'archzfs-linux-lts' ]; then
+  if [ "${stable_kernel_pkg}" != '' ]; then
+    printf "linux-headers\\n" >> "${build_dir}/releng/packages.x86_64"
+  fi
+  if [ "${lts_kernel_pkg}" != '' ]; then
     printf "linux-lts-headers\\n" >> "${build_dir}/releng/packages.x86_64"
   fi
 }
@@ -221,10 +238,12 @@ add_user_packages_to_archiso() {
   done
 }
 
-load_zfs_kernel_module_on_archiso_boot() {
+load_zfs_stable_kernel_on_archiso_boot() {
   # recommended method: https://wiki.archlinux.org/index.php/ZFS#Automatic_Start
-  mkdir -p "${build_dir}/releng/airootfs/etc/modules-load.d"
-  printf "zfs\\n" > "${build_dir}/releng/airootfs/etc/modules-load.d/zfs.conf"
+  if [ "${stable_kernel_pkg}" != '' ]; then
+    mkdir -p "${build_dir}/releng/airootfs/etc/modules-load.d"
+    printf "zfs\\n" > "${build_dir}/releng/airootfs/etc/modules-load.d/zfs.conf"
+  fi
 }
 
 run_archiso_build_script() {
@@ -251,7 +270,7 @@ build_archiso() {
   add_kernel_packages_to_archiso "$@"
   add_kernel_header_packages_to_archiso "$@"
   add_user_packages_to_archiso "$@"
-  load_zfs_kernel_module_on_archiso_boot "$@"
+  load_zfs_stable_kernel_on_archiso_boot "$@"
   run_archiso_build_script "$@"
   clean_working_build_dirs "$@"
 }
@@ -274,10 +293,10 @@ write_iso_to_device() {
 main() {
   get_cmd_opts_and_args "$@"
   check_running_as_root "$@"
-  if [ "${clean_dir}" = 'true' ]; then
+  if [ "${do_clean_dir}" = 'true' ]; then
     clean_archiso_build_dir "$@"
   fi
-  if [ "${stable_kernel_pkg}" != '' ]; then
+  if [ "${do_build_iso}" = 'true' ]; then
     check_archiso_installed "$@"
     build_archiso "$@"
   fi

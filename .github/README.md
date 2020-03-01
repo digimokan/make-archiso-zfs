@@ -59,8 +59,8 @@ required to build an Arch Linux iso.
 
 ```
 USAGE:
-  make_archiso_zfs.sh  -h
-  sudo  make_archiso_zfs.sh  -b  [-l]  [-d <build_dir>]
+  make_archiso_zfs.sh        -h
+  sudo  make_archiso_zfs.sh  -b  [-s]  [-l]  [-d <build_dir>]
                              [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]
                              [-w <device>]
   sudo  make_archiso_zfs.sh  [-d <build_dir>]  -w <device>
@@ -69,10 +69,12 @@ OPTIONS:
       print this help message
   -c --clean-build-dir
       remove archiso build dir before performing any operations
-  -b, --build-with-stable-zfs-kernel
-      build base iso running archzfs-linux kernel package
+  -b, --build-iso
+      build base iso running stock Arch 'linux' kernel pkg
+  -s, --add-and-enable-stable-zfs-kernel
+      add 'archzfs-linux' kernel pkg and enable it at boot
   -l, --add-lts-zfs-kernel
-      add archzfs-linux-lts kernel package to iso
+      add 'archzfs-linux-lts' kernel pkg
   -d <build_dir>, --set-build-dir=<build_dir>
       set archiso build dir (default is 'archiso_build')
   -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>
