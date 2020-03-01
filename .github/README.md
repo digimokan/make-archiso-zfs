@@ -52,7 +52,7 @@ required to build an Arch Linux iso.
 3. Build an archiso and write it to a USB drive:
 
    ```shell
-   $ ./make_archiso_zfs.sh --build-with-stable-zfs-kernel --write-iso-to-device=/dev/sdc
+   $ sudo ./make_archiso_zfs.sh --build-with-stable-zfs-kernel --write-iso-to-device=/dev/sdc
    ```
 
 ## Full Usage / Options
@@ -94,19 +94,13 @@ EXIT CODES:
 * Build archiso running stable zfs kernel, do not write output to device:
 
    ```shell
-   $ ./make-archiso-zfs.sh -s
+   $ sudo ./make-archiso-zfs.sh -b
    ```
 
 * Build archiso running stable zfs kernel, and add lts zfs kernel package:
 
    ```shell
-   $ ./make-archiso-zfs.sh -sl
-   ```
-
-* Build archiso running stable zfs kernel, and add lts zfs kernel package:
-
-   ```shell
-   $ ./make-archiso-zfs.sh -sl
+   $ sudo ./make-archiso-zfs.sh -bl
    ```
 
 ## Source And Build Files
