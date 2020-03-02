@@ -18,10 +18,11 @@ user_files=''                           # user files/dirs to add to iso
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")        -h"
-  echo "  sudo  $(basename "${0}")  -b  [-s]  [-l]  [-d <build_dir>]"
+  echo "  sudo  $(basename "${0}")  [-c]  -b  [-s]  [-l]  [-d <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]'
   echo '                             [-f <file1,dir1,...>]'
   echo '                             [-w <device>]'
+  echo "  sudo  $(basename "${0}")  -c  [-d <build_dir>]"
   echo "  sudo  $(basename "${0}")  [-d <build_dir>]  -w <device>"
   echo 'OPTIONS:'
   echo '  -h, --help'
