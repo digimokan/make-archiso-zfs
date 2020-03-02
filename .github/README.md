@@ -103,28 +103,10 @@ EXIT CODES:
    $ sudo ./make-archiso-zfs.sh -bs
    ```
 
-* Build archiso running stable zfs kernel, and add lts zfs kernel package:
-
-   ```shell
-   $ sudo ./make-archiso-zfs.sh -bsl
-   ```
-
 * Build archiso with stock Arch Linux kernel (no zfs kernels):
 
    ```shell
    $ sudo ./make-archiso-zfs.sh -b
-   ```
-
-* Build archiso and specify build directory name:
-
-   ```shell
-   $ sudo ./make-archiso-zfs.sh -bs -d "my_archiso_build_dir"
-   ```
-
-* Clean (i.e. remove) the build directory:
-
-   ```shell
-   $ sudo ./make-archiso-zfs.sh -c
    ```
 
 * Build archiso and install additional packages to iso:
@@ -145,7 +127,7 @@ EXIT CODES:
    $ sudo ./make-archiso-zfs.sh -bs -w /dev/sdb
    ```
 
-* Write iso (from ./archiso_build/out/archlinux-*.iso) to USB drive:
+* Write iso (from `./archiso_build/out/archlinux-*.iso`) to USB drive:
 
    ```shell
    $ sudo ./make-archiso-zfs.sh -w /dev/sdb
