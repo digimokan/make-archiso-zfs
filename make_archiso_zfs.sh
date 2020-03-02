@@ -13,12 +13,14 @@ do_build_iso='false'                    # user-selection to build the iso
 stable_kernel_pkg=''                    # stable kernel cmd-line selection
 lts_kernel_pkg=''                       # lts kernel cmd-line selection
 extra_packages=''                       # extra packages to install to archiso
+user_files=''                           # user files/dirs to add to iso
 
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")        -h"
   echo "  sudo  $(basename "${0}")  -b  [-s]  [-l]  [-d <build_dir>]"
-  echo '                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]'
+  echo '                             [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]'
+  echo '                             [-f <file1,dir1,...>]'
   echo '                             [-w <device>]'
   echo "  sudo  $(basename "${0}")  [-d <build_dir>]  -w <device>"
   echo 'OPTIONS:'
@@ -36,8 +38,10 @@ print_usage() {
   echo '      set archiso build dir (default is '\''archiso_build'\'')'
   echo '  -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>'
   echo '      extra packages to install to iso'
-  echo '  -f <pkgs_file>, --extra-packages-file=<pkgs_file>'
+  echo '  -P <pkgs_file>, --extra-packages-file=<pkgs_file>'
   echo '      extra packages to install to iso (from file, one pkg per line)'
+  echo '  -f <file1,dir1,...>, --user-files=<file1,dir1,...>'
+  echo '      add files and directories to iso (in '\''/root/'\'' dir)'
   echo '  -w <device>, --write-iso-to-device=<device>'
   echo '      write built iso to device (e.g. device /dev/sdb)'
   echo 'EXIT CODES:'
@@ -50,7 +54,7 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hcbsld:f:p:w:-:' option; do
+  while getopts ':hcbsld:p:P:f:w:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       c)  handle_clean_build_dir ;;
@@ -58,8 +62,9 @@ get_cmd_opts_and_args() {
       s)  handle_zfs_kernel_stable ;;
       l)  handle_zfs_kernel_lts ;;
       d)  handle_set_build_dir "${OPTARG}" ;;
-      f)  handle_extra_packages_from_file "${OPTARG}" ;;
       p)  handle_extra_packages "${OPTARG}" ;;
+      P)  handle_extra_packages_from_file "${OPTARG}" ;;
+      f)  handle_user_files "${OPTARG}" ;;
       w)  handle_write_iso_to_device "${OPTARG}" ;;
       -)  LONG_OPTARG="${OPTARG#*=}"
           case ${OPTARG} in
@@ -79,6 +84,8 @@ get_cmd_opts_and_args() {
             extra-packages-from-file*)   handle_missing_option_arg "${OPTARG}" ;;
             extra-packages=?*)           handle_extra_packages "${LONG_OPTARG}" ;;
             extra-packages*)             handle_missing_option_arg "${OPTARG}" ;;
+            user-files=?*)               handle_user_files "${LONG_OPTARG}" ;;
+            user-files*)                 handle_missing_option_arg "${OPTARG}" ;;
             write-iso-to-device=?*)      handle_write_iso_to_device "${LONG_OPTARG}" ;;
             write-iso-to-device*)        handle_missing_option_arg "${OPTARG}" ;;
             '')                          break ;; # non-option arg starting with '-'
@@ -127,6 +134,10 @@ handle_extra_packages_from_file() {
     fi
     extra_packages="${extra_packages}${pkg}"
   done < "${1}"
+}
+
+handle_user_files() {
+  user_files="${1}"
 }
 
 handle_write_iso_to_device() {
@@ -238,6 +249,12 @@ add_user_packages_to_archiso() {
   done
 }
 
+add_user_files_to_archiso() {
+  for file_or_dir in $(echo "${user_files}" | tr "," " "); do
+    cp -R "${file_or_dir}" "${build_dir}/releng/airootfs/root/"
+  done
+}
+
 load_zfs_stable_kernel_on_archiso_boot() {
   # recommended method: https://wiki.archlinux.org/index.php/ZFS#Automatic_Start
   if [ "${stable_kernel_pkg}" != '' ]; then
@@ -270,6 +287,7 @@ build_archiso() {
   add_kernel_packages_to_archiso "$@"
   add_kernel_header_packages_to_archiso "$@"
   add_user_packages_to_archiso "$@"
+  add_user_files_to_archiso "$@"
   load_zfs_stable_kernel_on_archiso_boot "$@"
   run_archiso_build_script "$@"
   clean_working_build_dirs "$@"

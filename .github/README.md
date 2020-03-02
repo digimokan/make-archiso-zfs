@@ -61,7 +61,8 @@ required to build an Arch Linux iso.
 USAGE:
   make_archiso_zfs.sh        -h
   sudo  make_archiso_zfs.sh  -b  [-s]  [-l]  [-d <build_dir>]
-                             [-p <pkg1,pkg2,...>]  [-f <pkgs_file>]
+                             [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]
+                             [-f <file1,dir1,...>]
                              [-w <device>]
   sudo  make_archiso_zfs.sh  [-d <build_dir>]  -w <device>
 OPTIONS:
@@ -79,8 +80,10 @@ OPTIONS:
       set archiso build dir (default is 'archiso_build')
   -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>
       extra packages to install to iso
-  -f <pkgs_file>, --extra-packages-file=<pkgs_file>
+  -P <pkgs_file>, --extra-packages-file=<pkgs_file>
       extra packages to install to iso (from file, one pkg per line)
+  -f <file1,dir1,...>, --user-files=<file1,dir1,...>
+      add files and directories to iso (in '/root/' dir)
   -w <device>, --write-iso-to-device=<device>
       write built iso to device (e.g. device /dev/sdb)
 EXIT CODES:
