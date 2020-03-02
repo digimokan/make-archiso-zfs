@@ -2,6 +2,7 @@
 
 Shell script to build Arch Linux iso that runs zfs kernel.
 
+[![Release](https://img.shields.io/github/release/digimokan/make-archiso-zfs.svg?label=release)](https://github.com/digimokan/make-archiso-zfs/releases/latest "Latest Release Notes")
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?label=license)](LICENSE.txt "Project License")
 
 ## Table Of Contents
