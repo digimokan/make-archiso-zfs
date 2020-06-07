@@ -6,7 +6,8 @@
 ################################################################################
 
 # global vars:
-build_dir='archiso_build'               # build dir for creating archiso
+tmp_build_dir=$(mktemp -u -t archiso_build.XXXXXX) # working archiso build dir
+final_build_dir='archiso_build'         # final build dir produced by script
 do_clean_dir='false'                    # user-selection to clean build dir
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 do_build_iso='false'                    # user-selection to build the iso
@@ -118,7 +119,7 @@ handle_zfs_kernel_lts() {
 }
 
 handle_set_build_dir() {
-  build_dir="${1}"
+  final_build_dir="${1}"
 }
 
 handle_extra_packages() {
@@ -187,25 +188,25 @@ check_running_as_root() {
 }
 
 clean_archiso_build_dir() {
-  if [ -d "${build_dir}" ]; then
-    rm -r "${build_dir}"
+  if [ -d "${final_build_dir}" ]; then
+    rm -r "${final_build_dir}"
   fi
 }
 
 check_archiso_installed() {
   if [ ! -d '/usr/share/archiso' ]; then
-    quit_err_msg_with_help "'/usr/share/archiso/' not exist (is archiso installed?)" 1
+    quit_err_msg_with_help "'/usr/share/archiso/' not exist (is 'archiso' package installed?)" 1
   fi
 }
 
-make_archiso_build_dir() {
-  mkdir -p "${build_dir}"
+make_tmp_build_dir() {
+  mkdir "${tmp_build_dir}"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
-    err_msg="unable to create archiso build dir '${build_dir}'"
+    err_msg="unable to create working tmp build dir '${tmp_build_dir}'"
     quit_err_msg "${err_msg}" 5
   fi
-  cp -r /usr/share/archiso/configs/releng/ "${build_dir}"
+  cp -r /usr/share/archiso/configs/releng/ "${tmp_build_dir}"
 }
 
 add_archzfs_repo_to_archiso() {
@@ -217,55 +218,55 @@ add_archzfs_repo_to_archiso() {
   # note: archzfs kernels often depend on these archived binaries
   # note: must be first in repo order, or 'core' kernel binaries will be used
   # shellcheck disable=SC2016
-  sed -i '/^\[core\]$/ i\[archzfs-kernels]\nServer = http://end.re/$repo\n' "${build_dir}/releng/pacman.conf"
+  sed -i '/^\[core\]$/ i\[archzfs-kernels]\nServer = http://end.re/$repo\n' "${tmp_build_dir}/releng/pacman.conf"
   # archzfs stable/lts/etc zfs kernel binaries:
   #     https://github.com/archzfs/archzfs/wiki
   # note: archzfs kernels not in other repos, so safe to append to repo order
   # shellcheck disable=SC2016
-  sed -i '$ a\\n[archzfs]\nServer = http://archzfs.com/$repo/x86_64\nSigLevel = Optional TrustAll\n' "${build_dir}/releng/pacman.conf"
+  sed -i '$ a\\n[archzfs]\nServer = http://archzfs.com/$repo/x86_64\nSigLevel = Optional TrustAll\n' "${tmp_build_dir}/releng/pacman.conf"
 }
 
 add_kernel_packages_to_archiso() {
   if [ "${stable_kernel_pkg}" != '' ]; then
-    printf "%s\\n" "${stable_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
+    printf "%s\\n" "${stable_kernel_pkg}" >> "${tmp_build_dir}/releng/packages.x86_64"
   fi
   if [ "${lts_kernel_pkg}" != '' ]; then
-    printf "%s\\n" "${lts_kernel_pkg}" >> "${build_dir}/releng/packages.x86_64"
+    printf "%s\\n" "${lts_kernel_pkg}" >> "${tmp_build_dir}/releng/packages.x86_64"
   fi
 }
 
 add_kernel_header_packages_to_archiso() {
   # recommendation: https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso
   if [ "${stable_kernel_pkg}" != '' ]; then
-    printf "linux-headers\\n" >> "${build_dir}/releng/packages.x86_64"
+    printf "linux-headers\\n" >> "${tmp_build_dir}/releng/packages.x86_64"
   fi
   if [ "${lts_kernel_pkg}" != '' ]; then
-    printf "linux-lts-headers\\n" >> "${build_dir}/releng/packages.x86_64"
+    printf "linux-lts-headers\\n" >> "${tmp_build_dir}/releng/packages.x86_64"
   fi
 }
 
 add_user_packages_to_archiso() {
   for pkg in $(echo "${extra_packages}" | tr "," " "); do
-    printf "%s\\n" "${pkg}" >> "${build_dir}/releng/packages.x86_64"
+    printf "%s\\n" "${pkg}" >> "${tmp_build_dir}/releng/packages.x86_64"
   done
 }
 
 add_user_files_to_archiso() {
   for file_or_dir in $(echo "${user_files}" | tr "," " "); do
-    cp -R "${file_or_dir}" "${build_dir}/releng/airootfs/root/"
+    cp -R "${file_or_dir}" "${tmp_build_dir}/releng/airootfs/root/"
   done
 }
 
 load_zfs_stable_kernel_on_archiso_boot() {
   # recommended method: https://wiki.archlinux.org/index.php/ZFS#Automatic_Start
   if [ "${stable_kernel_pkg}" != '' ]; then
-    mkdir -p "${build_dir}/releng/airootfs/etc/modules-load.d"
-    printf "zfs\\n" > "${build_dir}/releng/airootfs/etc/modules-load.d/zfs.conf"
+    mkdir -p "${tmp_build_dir}/releng/airootfs/etc/modules-load.d"
+    printf "zfs\\n" > "${tmp_build_dir}/releng/airootfs/etc/modules-load.d/zfs.conf"
   fi
 }
 
 run_archiso_build_script() {
-  "${build_dir}/releng/build.sh" -v
+  "${tmp_build_dir}/releng/build.sh" -v
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
     quit_err_msg "archiso releng/build.sh script failure" 5
@@ -273,17 +274,26 @@ run_archiso_build_script() {
 }
 
 clean_working_build_dirs() {
-  if [ -d "${build_dir}" ]; then
-    [ -d work ] && mv work "${build_dir}/work"
-    [ -d out ] && mv out "${build_dir}/out"
+  if [ -d "${tmp_build_dir}" ]; then
+    [ -d work ] && mv work "${tmp_build_dir}/work"
+    [ -d out ] && mv out "${tmp_build_dir}/out"
   else
     [ -d work ] && rm -r work
     [ -d out ] && rm -r out
   fi
 }
 
+move_to_final_build_dir() {
+  mv "${tmp_build_dir}" "${final_build_dir}"
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    err_msg="unable to move '${tmp_build_dir}' to '${final_build_dir}'"
+    quit_err_msg "${err_msg}" 5
+  fi
+}
+
 build_archiso() {
-  make_archiso_build_dir "$@"
+  make_tmp_build_dir "$@"
   add_archzfs_repo_to_archiso "$@"
   add_kernel_packages_to_archiso "$@"
   add_kernel_header_packages_to_archiso "$@"
@@ -292,14 +302,15 @@ build_archiso() {
   load_zfs_stable_kernel_on_archiso_boot "$@"
   run_archiso_build_script "$@"
   clean_working_build_dirs "$@"
+  move_to_final_build_dir "$@"
 }
 
 write_iso_to_device() {
-  if [ ! -d "${build_dir}" ]; then
-    err_msg="writing iso from ${build_dir}, but ${build_dir} not exist"
+  if [ ! -d "${final_build_dir}" ]; then
+    err_msg="writing iso from ${final_build_dir}, but ${final_build_dir} not exist"
     quit_err_msg_with_help "${err_msg}" 10
   fi
-  iso_file=$(ls ./"${build_dir}"/out/archlinux-*)
+  iso_file=$(ls ./"${final_build_dir}"/out/archlinux-*)
   # recommended method: https://wiki.archlinux.org/index.php/USB_flash_installation_media#Using_dd
   dd bs=4M if="${iso_file}" of="${archiso_dev}" status=progress oflag=sync
   exit_code="${?}"
