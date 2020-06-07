@@ -79,8 +79,8 @@ get_cmd_opts_and_args() {
             add-and-enable-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
             add-lts-zfs-kernel)          handle_zfs_kernel_lts ;;
             add-lts-zfs-kernel=*)        handle_illegal_option_arg "${OPTARG}" ;;
-            handle-set-build-dir=?*)     handle_set_build_dir "${LONG_OPTARG}" ;;
-            handle-set-build-dir*)       handle_missing_option_arg "${OPTARG}" ;;
+            set-build-dir=?*)            handle_set_build_dir "${LONG_OPTARG}" ;;
+            set-build-dir*)              handle_missing_option_arg "${OPTARG}" ;;
             extra-packages-from-file=?*) handle_extra_packages_from_file "${LONG_OPTARG}" ;;
             extra-packages-from-file*)   handle_missing_option_arg "${OPTARG}" ;;
             extra-packages=?*)           handle_extra_packages "${LONG_OPTARG}" ;;
