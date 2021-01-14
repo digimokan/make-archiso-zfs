@@ -1,6 +1,6 @@
 # make-archiso-zfs
 
-Shell script to build Arch Linux iso that runs zfs kernel.
+Shell script to build Arch Linux iso that runs zfs kernel module.
 
 [![Release](https://img.shields.io/github/release/digimokan/make-archiso-zfs.svg?label=release)](https://github.com/digimokan/make-archiso-zfs/releases/latest "Latest Release Notes")
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?label=license)](LICENSE.txt "Project License")
@@ -23,9 +23,8 @@ required to build an Arch Linux iso.
 
 ## Features
 
-* Built iso runs the stable zfs kernel (`archzfs-linux`), loaded at iso boot.
-* Options to add `archzfs-linux-lts`, additional packages, and user-specified
-  files/directories to iso.
+* Built iso runs stable zfs kernel module (`archzfs-linux`), loaded at iso boot.
+* Options to add additional packages, and user-specified files/dirs to iso.
 * Option to write the built iso to device (i.e. /dev/sdx USB drive).
 * Simple shell-agnostic script, [shellcheck](https://github.com/koalaman/shellcheck)
   error and warning free.
@@ -61,7 +60,7 @@ required to build an Arch Linux iso.
 ```
 USAGE:
   make_archiso_zfs.sh        -h
-  sudo  make_archiso_zfs.sh  [-c]  -b  [-s]  [-l]  [-d <build_dir>]
+  sudo  make_archiso_zfs.sh  [-c]  -b  [-z]  [-d <build_dir>]
                              [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]
                              [-f <file1,dir1,...>]
                              [-w <device>]
@@ -74,10 +73,8 @@ OPTIONS:
       remove archiso build dir before performing any operations
   -b, --build-iso
       build base iso running stock Arch 'linux' kernel pkg
-  -s, --add-and-enable-stable-zfs-kernel
-      add 'archzfs-linux' kernel pkg and enable it at boot
-  -l, --add-lts-zfs-kernel
-      add 'archzfs-linux-lts' kernel pkg
+  -z, --enable-zfs-kernel-module
+      add 'archzfs-linux' stable kernel mod, enable it at boot
   -d <build_dir>, --set-build-dir=<build_dir>
       set archiso build dir (default is 'archiso_build')
   -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>
@@ -98,13 +95,13 @@ EXIT CODES:
 
 ## Examples
 
-* Build archiso running stable zfs kernel:
+* Build archiso running stable zfs kernel module:
 
    ```shell
-   $ sudo ./make-archiso-zfs.sh -bs
+   $ sudo ./make-archiso-zfs.sh -bz
    ```
 
-* Build archiso with stock Arch Linux kernel (no zfs kernels):
+* Build archiso with stock Arch Linux kernel (no zfs kernel modules):
 
    ```shell
    $ sudo ./make-archiso-zfs.sh -b
@@ -113,19 +110,19 @@ EXIT CODES:
 * Build archiso and install additional packages to iso:
 
    ```shell
-   $ sudo ./make-archiso-zfs.sh -bs -p "git,ansible"
+   $ sudo ./make-archiso-zfs.sh -bz -p "git,ansible"
    ```
 
 * Build archiso and add a file to the iso `/root/` directory:
 
    ```shell
-   $ sudo ./make-archiso-zfs.sh -bs -f "my_custom_script.sh"
+   $ sudo ./make-archiso-zfs.sh -bz -f "my_custom_script.sh"
    ```
 
 * Build archiso and write the built iso to a USB drive:
 
    ```shell
-   $ sudo ./make-archiso-zfs.sh -bs -w /dev/sdb
+   $ sudo ./make-archiso-zfs.sh -bz -w /dev/sdb
    ```
 
 * Write iso (from `./archiso_build/out/archlinux-*.iso`) to USB drive:
@@ -137,7 +134,7 @@ EXIT CODES:
 * Build archiso and write to USB drive using alternate long options:
 
    ```shell
-   $ sudo ./make-archiso-zfs.sh --build-iso --add-and-enable-stable-zfs-kernel --write-iso-to-device=/dev/sdb
+   $ sudo ./make-archiso-zfs.sh --build-iso --enable-zfs-kernel-module --write-iso-to-device=/dev/sdb
    ```
 
 ## Source And Build Files

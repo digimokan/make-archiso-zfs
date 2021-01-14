@@ -12,14 +12,13 @@ do_clean_dir='false'                    # user-selection to clean build dir
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 do_build_iso='false'                    # user-selection to build the iso
 stable_kernel_pkg=''                    # stable kernel cmd-line selection
-lts_kernel_pkg=''                       # lts kernel cmd-line selection
 extra_packages=''                       # extra packages to install to archiso
 user_files=''                           # user files/dirs to add to iso
 
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")        -h"
-  echo "  sudo  $(basename "${0}")  [-c]  -b  [-s]  [-l]  [-d <build_dir>]"
+  echo "  sudo  $(basename "${0}")  [-c]  -b  [-z]  [-d <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]'
   echo '                             [-f <file1,dir1,...>]'
   echo '                             [-w <device>]'
@@ -32,10 +31,8 @@ print_usage() {
   echo '      remove archiso build dir before performing any operations'
   echo '  -b, --build-iso'
   echo '      build base iso running stock Arch '\''linux'\'' kernel pkg'
-  echo '  -s, --add-and-enable-stable-zfs-kernel'
-  echo '      add '\''archzfs-linux'\'' kernel pkg and enable it at boot'
-  echo '  -l, --add-lts-zfs-kernel'
-  echo '      add '\''archzfs-linux-lts'\'' kernel pkg'
+  echo '  -z, --enable-zfs-kernel-module'
+  echo '      add '\''archzfs-linux'\'' stable kernel mod, enable it at boot'
   echo '  -d <build_dir>, --set-build-dir=<build_dir>'
   echo '      set archiso build dir (default is '\''archiso_build'\'')'
   echo '  -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>'
@@ -56,13 +53,12 @@ print_usage() {
 }
 
 get_cmd_opts_and_args() {
-  while getopts ':hcbsld:p:P:f:w:-:' option; do
+  while getopts ':hcbzd:p:P:f:w:-:' option; do
     case "${option}" in
       h)  handle_help ;;
       c)  handle_clean_build_dir ;;
       b)  handle_build_iso ;;
-      s)  handle_zfs_kernel_stable ;;
-      l)  handle_zfs_kernel_lts ;;
+      z)  handle_zfs_kernel_stable ;;
       d)  handle_set_build_dir "${OPTARG}" ;;
       p)  handle_extra_packages "${OPTARG}" ;;
       P)  handle_extra_packages_from_file "${OPTARG}" ;;
@@ -76,10 +72,8 @@ get_cmd_opts_and_args() {
             clean-build-dir=*)           handle_illegal_option_arg "${OPTARG}" ;;
             build-iso)                   handle_build_iso ;;
             build-iso=*)                 handle_illegal_option_arg "${OPTARG}" ;;
-            add-and-enable-stable-zfs-kernel)   handle_zfs_kernel_stable ;;
-            add-and-enable-stable-zfs-kernel=*) handle_illegal_option_arg "${OPTARG}" ;;
-            add-lts-zfs-kernel)          handle_zfs_kernel_lts ;;
-            add-lts-zfs-kernel=*)        handle_illegal_option_arg "${OPTARG}" ;;
+            enable-zfs-kernel-module)    handle_zfs_kernel_stable ;;
+            enable-zfs-kernel-module=*)  handle_illegal_option_arg "${OPTARG}" ;;
             set-build-dir=?*)            handle_set_build_dir "${LONG_OPTARG}" ;;
             set-build-dir*)              handle_missing_option_arg "${OPTARG}" ;;
             extra-packages-from-file=?*) handle_extra_packages_from_file "${LONG_OPTARG}" ;;
@@ -112,10 +106,6 @@ handle_build_iso() {
 
 handle_zfs_kernel_stable() {
   stable_kernel_pkg='archzfs-linux'
-}
-
-handle_zfs_kernel_lts() {
-  lts_kernel_pkg='archzfs-linux-lts'
 }
 
 handle_set_build_dir() {
@@ -210,7 +200,7 @@ make_tmp_build_dir() {
 }
 
 add_archzfs_repo_to_archiso() {
-  if [ "${stable_kernel_pkg}" = '' ] && [ "${lts_kernel_pkg}" = '' ]; then
+  if [ "${stable_kernel_pkg}" = '' ]; then
     return
   fi
   # archived 'core' repo stable/lts/etc kernel binaries:
@@ -230,18 +220,12 @@ add_kernel_packages_to_archiso() {
   if [ "${stable_kernel_pkg}" != '' ]; then
     printf "%s\\n" "${stable_kernel_pkg}" >> "${tmp_build_dir}/releng/packages.x86_64"
   fi
-  if [ "${lts_kernel_pkg}" != '' ]; then
-    printf "%s\\n" "${lts_kernel_pkg}" >> "${tmp_build_dir}/releng/packages.x86_64"
-  fi
 }
 
 add_kernel_header_packages_to_archiso() {
   # recommendation: https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso
   if [ "${stable_kernel_pkg}" != '' ]; then
     printf "linux-headers\\n" >> "${tmp_build_dir}/releng/packages.x86_64"
-  fi
-  if [ "${lts_kernel_pkg}" != '' ]; then
-    printf "linux-lts-headers\\n" >> "${tmp_build_dir}/releng/packages.x86_64"
   fi
 }
 
