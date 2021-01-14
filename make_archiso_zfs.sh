@@ -218,7 +218,7 @@ add_archzfs_repo_to_archiso() {
   # note: archzfs kernels often depend on these archived binaries
   # note: must be first in repo order, or 'core' kernel binaries will be used
   # shellcheck disable=SC2016
-  sed -i '/^\[core\]$/ i\[archzfs-kernels]\nServer = http://end.re/$repo\n' "${tmp_build_dir}/releng/pacman.conf"
+  sed -i '/^\[core\]$/ i\[zfs-linux]\nServer = http://kernels.archzfs.com/$repo\n' "${tmp_build_dir}/releng/pacman.conf"
   # archzfs stable/lts/etc zfs kernel binaries:
   #     https://github.com/archzfs/archzfs/wiki
   # note: archzfs kernels not in other repos, so safe to append to repo order
