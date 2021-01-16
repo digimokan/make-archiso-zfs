@@ -276,6 +276,17 @@ move_to_final_build_dir() {
   fi
 }
 
+chown_final_build_dir() {
+  user_name=$(id -un)
+  user_pri_group=$(id -gn)
+  chown -R "${user_name}":"${user_pri_group}" "${final_build_dir}"
+  exit_code="${?}"
+  if [ "${exit_code}" != 0 ]; then
+    err_msg="unable to reset ownership of '${final_build_dir}'"
+    quit_err_msg "${err_msg}" 5
+  fi
+}
+
 build_archiso() {
   make_tmp_build_dir "$@"
   add_archzfs_repo_to_archiso "$@"
@@ -287,6 +298,7 @@ build_archiso() {
   run_archiso_build_script "$@"
   clean_working_build_dirs "$@"
   move_to_final_build_dir "$@"
+  chown_final_build_dir "$@"
 }
 
 write_iso_to_device() {
