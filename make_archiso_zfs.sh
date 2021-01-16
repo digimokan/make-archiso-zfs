@@ -277,8 +277,8 @@ move_to_final_build_dir() {
 }
 
 chown_final_build_dir() {
-  user_name=$(id -un)
-  user_pri_group=$(id -gn)
+  user_name=$(id -un "$(logname)")
+  user_pri_group=$(id -gn "$(logname)")
   chown -R "${user_name}":"${user_pri_group}" "${final_build_dir}"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
