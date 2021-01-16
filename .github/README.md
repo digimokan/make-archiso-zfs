@@ -52,7 +52,7 @@ required to build an Arch Linux iso.
 3. Build an archiso and write it to a USB drive:
 
    ```shell
-   $ sudo ./make-archiso-zfs.sh -bs -w /dev/sdb
+   $ sudo ./make-archiso-zfs.sh -bz -w /dev/sdb
    ```
 
 ## Full Usage / Options
