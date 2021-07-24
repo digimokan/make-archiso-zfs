@@ -24,7 +24,8 @@ required to build an Arch Linux iso.
 ## Features
 
 * Built iso runs stable zfs kernel module (`archzfs-linux`), loaded at iso boot.
-* Options to add additional packages, and user-specified files/dirs to iso.
+* Option to install additional packages to iso.
+* Option to add user-specified files/dirs to iso.
 * Option to write the built iso to device (i.e. /dev/sdx USB drive).
 * Simple shell-agnostic script, [shellcheck](https://github.com/koalaman/shellcheck)
   error and warning free.

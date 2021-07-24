@@ -18,12 +18,12 @@ user_files=''                           # user files/dirs to add to iso
 print_usage() {
   echo 'USAGE:'
   echo "  $(basename "${0}")        -h"
-  echo "  sudo  $(basename "${0}")  [-c]  -b  [-z]  [-d <build_dir>]"
+  echo "  sudo  $(basename "${0}")  -b  [-c]  [-z]  [-d <build_dir>]"
   echo '                             [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]'
   echo '                             [-f <file1,dir1,...>]'
   echo '                             [-w <device>]'
   echo "  sudo  $(basename "${0}")  -c  [-d <build_dir>]"
-  echo "  sudo  $(basename "${0}")  [-d <build_dir>]  -w <device>"
+  echo "  sudo  $(basename "${0}")  -w <device>  [-d <build_dir>]"
   echo 'OPTIONS:'
   echo '  -h, --help'
   echo '      print this help message'
@@ -52,7 +52,7 @@ print_usage() {
   exit "${1}"
 }
 
-get_cmd_opts_and_args() {
+get_cmd_opts() {
   while getopts ':hcbzd:p:P:f:w:-:' option; do
     case "${option}" in
       h)  handle_help ;;
@@ -90,6 +90,14 @@ get_cmd_opts_and_args() {
       \?) handle_unknown_option "${OPTARG}" ;;
     esac
   done
+}
+
+check_valid_opts() {
+  if [ "${do_clean_dir}" = 'false' ] && \
+     [ "${do_build_iso}" = 'false' ] && \
+     [ "${archiso_dev}" = '' ]; then
+    quit_err_msg_with_help "no valid script options selected" 1
+  fi
 }
 
 handle_help() {
@@ -317,7 +325,8 @@ write_iso_to_device() {
 }
 
 main() {
-  get_cmd_opts_and_args "$@"
+  get_cmd_opts "$@"
+  check_valid_opts "$@"
   check_running_as_root "$@"
   if [ "${do_clean_dir}" = 'true' ]; then
     clean_archiso_build_dir "$@"
