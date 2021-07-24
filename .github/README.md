@@ -11,6 +11,7 @@ Shell script to build Arch Linux iso that runs zfs kernel module.
 * [Features](#features)
 * [Requirements](#requirements)
 * [Quick Start](#quick-start)
+* [Build Artifacts](#build-artifacts)
 * [Full Usage / Options](#full-usage--options)
 * [Examples](#examples)
 * [Source And Build Files](#source-and-build-files)
@@ -55,6 +56,12 @@ required to build an Arch Linux iso.
    ```shell
    $ sudo ./make-archiso-zfs.sh -bz -w /dev/sdb
    ```
+
+## Build Artifacts
+
+* The script uses _tmpfs_ for the working build dir.
+* Building multiple consecutive ISOs may reduce space in `/tmp`.
+* Reclaim space by deleting `/tmp/archiso_build.XXXXXX` working build dirs.
 
 ## Full Usage / Options
 
