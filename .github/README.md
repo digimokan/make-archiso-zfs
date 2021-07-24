@@ -61,23 +61,17 @@ required to build an Arch Linux iso.
 ```
 USAGE:
   make_archiso_zfs.sh        -h
-  sudo  make_archiso_zfs.sh  -b  [-c]  [-z]  [-d <build_dir>]
-                             [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]
+  sudo  make_archiso_zfs.sh  -b  [-c]  [-z]  [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]
                              [-f <file1,dir1,...>]
                              [-w <device>]
-  sudo  make_archiso_zfs.sh  -c  [-d <build_dir>]
-  sudo  make_archiso_zfs.sh  -w <device>  [-d <build_dir>]
+  sudo  make_archiso_zfs.sh  -w <device>
 OPTIONS:
   -h, --help
       print this help message
-  -c --clean-build-dir
-      remove archiso build dir before performing any operations
   -b, --build-iso
       build base iso running stock Arch 'linux' kernel pkg
   -z, --enable-zfs-kernel-module
       add 'archzfs-linux' stable kernel mod, enable it at boot
-  -d <build_dir>, --set-build-dir=<build_dir>
-      set archiso build dir (default is 'archiso_build')
   -p <pkg1,pkg2,...>, --extra-packages=<pkg1,pkg2,...>
       extra packages to install to iso
   -P <pkgs_file>, --extra-packages-file=<pkgs_file>
@@ -126,7 +120,7 @@ EXIT CODES:
    $ sudo ./make-archiso-zfs.sh -bz -w /dev/sdb
    ```
 
-* Write iso (from `./archiso_build/out/archlinux-*.iso`) to USB drive:
+* Write iso (from `./out/archlinux-*.iso`) to USB drive:
 
    ```shell
    $ sudo ./make-archiso-zfs.sh -w /dev/sdb
@@ -143,10 +137,7 @@ EXIT CODES:
 ```
 ├─┬ make-archiso-zfs/
 │ │
-│ ├─┬ archiso_build/        # build directory
-│ │ ├── out/                # final build output: the iso file
-│ │ ├── releng/             # config directory used in build prep
-│ │ └── work/               # working directory used while building
+│ ├── out/                  # final build output: the iso file
 │ │
 │ ├── make-archiso-zfs.sh   # the build script
 ```
