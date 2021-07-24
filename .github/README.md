@@ -34,7 +34,7 @@ required to build an Arch Linux iso.
 ## Requirements
 
 * Arch Linux
-* [archiso](https://www.archlinux.org/packages/?name=archiso) package
+* [archiso](https://www.archlinux.org/packages/?name=archiso) package installed
 
 ## Quick Start
 
@@ -61,12 +61,12 @@ required to build an Arch Linux iso.
 ```
 USAGE:
   make_archiso_zfs.sh        -h
-  sudo  make_archiso_zfs.sh  [-c]  -b  [-z]  [-d <build_dir>]
+  sudo  make_archiso_zfs.sh  -b  [-c]  [-z]  [-d <build_dir>]
                              [-p <pkg1,pkg2,...>]  [-P <pkgs_file>]
                              [-f <file1,dir1,...>]
                              [-w <device>]
   sudo  make_archiso_zfs.sh  -c  [-d <build_dir>]
-  sudo  make_archiso_zfs.sh  [-d <build_dir>]  -w <device>
+  sudo  make_archiso_zfs.sh  -w <device>  [-d <build_dir>]
 OPTIONS:
   -h, --help
       print this help message
