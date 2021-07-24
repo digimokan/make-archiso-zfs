@@ -143,13 +143,12 @@ EXIT CODES:
 ```
 ├─┬ make-archiso-zfs/
 │ │
-│ ├─┬ archiso_build/               # build directory
-│ │ ├── out/                       # final build output: the iso file
-│ │ ├── releng/                    # config directory used in build prep
-│ │ └── work/                      # working directory used while building
+│ ├─┬ archiso_build/        # build directory
+│ │ ├── out/                # final build output: the iso file
+│ │ ├── releng/             # config directory used in build prep
+│ │ └── work/               # working directory used while building
 │ │
-│ ├── make-archiso-zfs.sh          # the build script
-│ │
+│ ├── make-archiso-zfs.sh   # the build script
 ```
 
 ## Contributing
