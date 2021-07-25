@@ -7,7 +7,8 @@
 
 # global vars:
 tmp_build_dir=$(mktemp -u -t archiso_build.XXXXXX) # archiso build dir
-tmp_work_dir="${tmp_build_dir}/work"    # archiso working-build dir
+tmp_work_dir="${tmp_build_dir}/work"    # mkarchiso working dir
+tmp_profile_dir="${tmp_build_dir}/releng"  # mkarchiso profile dir
 iso_out_dir="./out"                     # dir where built archiso will be placed
 archiso_dev=''                          # the thumb drive path (e.g. /dev/sdb)
 do_build_iso='false'                    # user-selection to build the iso
@@ -169,19 +170,19 @@ check_archiso_installed() {
 }
 
 make_tmp_build_dirs() {
-  mkdir "${tmp_build_dir}"
+  mkdir -p "${tmp_work_dir}"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
-    err_msg="unable to create working tmp build dir '${tmp_build_dir}'"
+    err_msg="unable to create tmp work dir '${tmp_work_dir}'"
     quit_err_msg "${err_msg}" 5
   fi
-  mkdir "${tmp_work_dir}"
+  mkdir -p "${tmp_profile_dir}"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
-    err_msg="unable to create working tmp work dir '${tmp_work_dir}'"
+    err_msg="unable to create tmp profile dir '${tmp_profile_dir}'"
     quit_err_msg "${err_msg}" 5
   fi
-  cp -r /usr/share/archiso/configs/releng/ "${tmp_build_dir}"
+  cp -r /usr/share/archiso/configs/releng/ "${tmp_profile_dir}"
 }
 
 add_archzfs_repo_to_archiso() {
@@ -193,49 +194,49 @@ add_archzfs_repo_to_archiso() {
   # note: archzfs kernels often depend on these archived binaries
   # note: must be first in repo order, or 'core' kernel binaries will be used
   # shellcheck disable=SC2016
-  sed -i '/^\[core\]$/ i\[zfs-linux]\nServer = http://kernels.archzfs.com/$repo\n' "${tmp_build_dir}/releng/pacman.conf"
+  sed -i '/^\[core\]$/ i\[zfs-linux]\nServer = http://kernels.archzfs.com/$repo\n' "${tmp_profile_dir}/pacman.conf"
   # archzfs stable/lts/etc zfs kernel binaries:
   #     https://github.com/archzfs/archzfs/wiki
   # note: archzfs kernels not in other repos, so safe to append to repo order
   # shellcheck disable=SC2016
-  sed -i '$ a\\n[archzfs]\nServer = http://archzfs.com/$repo/x86_64\nSigLevel = Optional TrustAll\n' "${tmp_build_dir}/releng/pacman.conf"
+  sed -i '$ a\\n[archzfs]\nServer = http://archzfs.com/$repo/x86_64\nSigLevel = Optional TrustAll\n' "${tmp_profile_dir}/pacman.conf"
 }
 
 add_kernel_packages_to_archiso() {
   if [ "${stable_kernel_pkg}" != '' ]; then
-    printf "%s\\n" "${stable_kernel_pkg}" >> "${tmp_build_dir}/releng/packages.x86_64"
+    printf "%s\\n" "${stable_kernel_pkg}" >> "${tmp_profile_dir}/packages.x86_64"
   fi
 }
 
 add_kernel_header_packages_to_archiso() {
   # recommendation: https://wiki.archlinux.org/index.php/ZFS#Embed_the_archzfs_packages_into_an_archiso
   if [ "${stable_kernel_pkg}" != '' ]; then
-    printf "linux-headers\\n" >> "${tmp_build_dir}/releng/packages.x86_64"
+    printf "linux-headers\\n" >> "${tmp_profile_dir}/packages.x86_64"
   fi
 }
 
 add_user_packages_to_archiso() {
   for pkg in $(echo "${extra_packages}" | tr "," " "); do
-    printf "%s\\n" "${pkg}" >> "${tmp_build_dir}/releng/packages.x86_64"
+    printf "%s\\n" "${pkg}" >> "${tmp_profile_dir}/packages.x86_64"
   done
 }
 
 add_user_files_to_archiso() {
   for file_or_dir in $(echo "${user_files}" | tr "," " "); do
-    cp -R "${file_or_dir}" "${tmp_build_dir}/releng/airootfs/root/"
+    cp -R "${file_or_dir}" "${tmp_profile_dir}/airootfs/root/"
   done
 }
 
 load_zfs_stable_kernel_on_archiso_boot() {
   # recommended method: https://wiki.archlinux.org/index.php/ZFS#Automatic_Start
   if [ "${stable_kernel_pkg}" != '' ]; then
-    mkdir -p "${tmp_build_dir}/releng/airootfs/etc/modules-load.d"
-    printf "zfs\\n" > "${tmp_build_dir}/releng/airootfs/etc/modules-load.d/zfs.conf"
+    mkdir -p "${tmp_profile_dir}/airootfs/etc/modules-load.d"
+    printf "zfs\\n" > "${tmp_profile_dir}/airootfs/etc/modules-load.d/zfs.conf"
   fi
 }
 
 run_archiso_build_script() {
-  mkarchiso -v -L 'ARCHISO_ZFS' -w "${tmp_work_dir}" "${tmp_build_dir}/releng"
+  mkarchiso -v -w "${tmp_work_dir}" -o "${tmp_build_dir}" "${tmp_profile_dir}/"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
     quit_err_msg "mkarchiso utility failure" 5
@@ -274,13 +275,14 @@ main() {
   check_running_as_root "$@"
   echo "current val of tmp_build_dir: ${tmp_build_dir}"
   echo "current val of tmp_work_dir: ${tmp_work_dir}"
-  # if [ "${do_build_iso}" = 'true' ]; then
-  #   check_archiso_installed "$@"
-  #   build_archiso "$@"
-  # fi
-  # if [ "${archiso_dev}" != '' ]; then
-  #   write_iso_to_device "$@"
-  # fi
+  echo "current val of tmp_profile_dir: ${tmp_profile_dir}"
+  if [ "${do_build_iso}" = 'true' ]; then
+    check_archiso_installed "$@"
+    build_archiso "$@"
+  fi
+  if [ "${archiso_dev}" != '' ]; then
+    write_iso_to_device "$@"
+  fi
   exit 0
 }
 
