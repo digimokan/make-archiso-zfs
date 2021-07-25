@@ -272,13 +272,15 @@ main() {
   get_cmd_opts "$@"
   check_valid_opts "$@"
   check_running_as_root "$@"
-  if [ "${do_build_iso}" = 'true' ]; then
-    check_archiso_installed "$@"
-    build_archiso "$@"
-  fi
-  if [ "${archiso_dev}" != '' ]; then
-    write_iso_to_device "$@"
-  fi
+  echo "current val of tmp_build_dir: ${tmp_build_dir}"
+  echo "current val of tmp_work_dir: ${tmp_work_dir}"
+  # if [ "${do_build_iso}" = 'true' ]; then
+  #   check_archiso_installed "$@"
+  #   build_archiso "$@"
+  # fi
+  # if [ "${archiso_dev}" != '' ]; then
+  #   write_iso_to_device "$@"
+  # fi
   exit 0
 }
 
