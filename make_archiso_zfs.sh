@@ -176,13 +176,7 @@ make_tmp_build_dirs() {
     err_msg="unable to create tmp work dir '${tmp_work_dir}'"
     quit_err_msg "${err_msg}" 5
   fi
-  mkdir -p "${tmp_profile_dir}"
-  exit_code="${?}"
-  if [ "${exit_code}" != 0 ]; then
-    err_msg="unable to create tmp profile dir '${tmp_profile_dir}'"
-    quit_err_msg "${err_msg}" 5
-  fi
-  cp -r /usr/share/archiso/configs/releng/ "${tmp_profile_dir}"
+  cp -r /usr/share/archiso/configs/releng "${tmp_profile_dir}"
 }
 
 add_archzfs_repo_to_archiso() {
