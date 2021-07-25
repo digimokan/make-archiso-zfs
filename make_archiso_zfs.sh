@@ -235,11 +235,10 @@ load_zfs_stable_kernel_on_archiso_boot() {
 }
 
 run_archiso_build_script() {
-  "${tmp_build_dir}/releng/build.sh" -v
   mkarchiso -v -L 'ARCHISO_ZFS' -w "${tmp_work_dir}" "${tmp_build_dir}/releng"
   exit_code="${?}"
   if [ "${exit_code}" != 0 ]; then
-    quit_err_msg "archiso releng/build.sh script failure" 5
+    quit_err_msg "mkarchiso utility failure" 5
   fi
 }
 
